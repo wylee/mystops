@@ -1,0 +1,12 @@
+---
+root: "{{ playbook_dir }}/.."
+
+hostname: mystops.io
+site_user: mystops
+remote_site_root: /sites/{{ hostname }}
+remote_backend_dir: "{{ remote_site_root }}/backend"
+remote_frontend_dir: "{{ remote_site_root }}/frontend"
+
+database_name: mystops
+database_user: mystops
+database_password: mystops

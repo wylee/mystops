@@ -1,0 +1,5 @@
+---
+- name: Build front end
+  tags:
+    - prepare-frontend
+  command: npm run frontend:build

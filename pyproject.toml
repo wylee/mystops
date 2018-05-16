@@ -1,0 +1,15 @@
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry]
+name = "mystops"
+version = "0.0.0"
+authors = ["Wyatt Baldwin <self@wyattbaldwin.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+ansible = "*"
+runcommands = "1.0a42"

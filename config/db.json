@@ -1,0 +1,17 @@
+{
+  "development": {
+    "user": "mystops",
+    "password": "mystops",
+    "host": "localhost",
+    "database": "mystops"
+  },
+  "test": {
+    "user": "mystops",
+    "password": "mystops",
+    "host": "localhost",
+    "database": "mystops_test"
+  },
+  "production": {
+    "use_env": true
+  }
+}

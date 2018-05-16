@@ -1,0 +1,10 @@
+{
+  "migrations": [
+    "create-table-migration",
+    "create-extensions",
+    "create-functions",
+    "create-table-stop",
+    "create-table-route",
+    "create-table-stop-route"
+  ]
+}

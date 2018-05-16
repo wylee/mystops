@@ -1,0 +1,8 @@
+- Background colors corresponding to arrival times
+- Logging
+
+- User accounts
+  - Model, registration, etc
+  - Login button
+  - Save stops of interest (to groups, optionally)
+  - Save route X serving stop Y

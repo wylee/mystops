@@ -1,0 +1,5 @@
+[web]
+mystops.io
+
+[web:vars]
+ansible_python_interpreter = /usr/bin/python3

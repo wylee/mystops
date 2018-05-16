@@ -1,0 +1,24 @@
+version: "3"
+
+networks:
+  mystops:
+    external: true
+
+volumes:
+  mystops-postgres-data:
+    external: true
+
+services:
+  postgres:
+    image: mystops-postgres
+    build:
+      context: docker/postgres
+    environment:
+      - POSTGRES_USER=mystops
+      - POSTGRES_PASSWORD=mystops
+    networks:
+      - mystops
+    ports:
+      - "5432:5432"
+    volumes:
+      - mystops-postgres-data:/var/lib/postgresql/data

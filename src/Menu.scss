@@ -1,0 +1,58 @@
+@import "./styles/mixins.scss";
+@import "./styles/variables.scss";
+
+.Menu {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+
+  > button {
+    position: absolute;
+    top: $standard-spacing;
+    left: $standard-spacing;
+    z-index: 3;
+
+    @media (max-width: $xs-width - 1px) {
+      top: $quarter-standard-spacing;
+      left: $quarter-standard-spacing;
+    }
+  }
+
+  > div.menu-backdrop {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  > ul.menu {
+    @include menu();
+
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    overflow: auto;
+    z-index: 2;
+    width: $menu-width;
+
+    > li.title {
+      @include title();
+      text-align: right;
+
+      &:hover {
+        background-color: white;
+      }
+    }
+
+    @media (max-width: $xs-width - 1px) {
+      right: 0;
+      width: auto;
+    }
+  }
+}

@@ -1,0 +1,7 @@
+CREATE TABLE migration (
+  name    TEXT PRIMARY KEY,
+  applied TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- REVERSE
+DROP TABLE migration;

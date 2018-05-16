@@ -1,0 +1,239 @@
+---
+- name: Set host name
+  tags:
+    - provision-hostname
+  hostname:
+    name: "{{ hostname }}"
+
+- name: Set timezone
+  tags:
+    - provision-timezone
+  timezone:
+    name: America/Los_Angeles
+
+- name: Update packages
+  tags:
+    - provision-update-packages
+  apt:
+    name: "*"
+    state: latest
+    force_apt_get: yes
+
+# SSL (Let's Encrypt)
+
+- name: Add certbot apt repo
+  tags:
+    - provision-ssl
+  apt_repository:
+    repo: ppa:certbot/certbot
+
+- name: Install certbot
+  tags:
+    - provision-ssl
+  apt:
+    name: certbot
+    state: latest
+    force_apt_get: yes
+
+- name: Stop Nginx
+  tags:
+    - provision-ssl
+  service:
+    name: nginx
+    state: stopped
+
+- name: Create cert
+  tags:
+    - provision-ssl
+  command: >
+    certbot
+    certonly
+    --agree-tos
+    --domain {{ hostname }}
+    --email letsencrypt@wyattbaldwin.com
+    --standalone
+  args:
+    creates: /etc/letsencrypt/live/{{ hostname }}/fullchain.pem
+
+- name: Create /etc/pki/nginx for DH params
+  tags:
+    - provision-ssl
+  file:
+    path: /etc/pki/nginx
+    state: directory
+
+- name: Create DH params
+  tags:
+    - provision-ssl
+  openssl_dhparam:
+    path: /etc/pki/nginx/{{ hostname }}.pem
+    size: 2048
+
+- name: Start Nginx
+  tags:
+    - provision-ssl
+  service:
+    name: nginx
+    state: started
+
+# PostgreSQL
+
+- name: Install Postgres server
+  tags:
+    - provision-postgres
+  apt:
+    name: postgresql-9.5
+    state: latest
+    force_apt_get: yes
+
+- name: Install PostGIS
+  tags:
+    - provision-postgres
+  apt:
+    name: postgresql-9.5-postgis-2.2
+    state: latest
+    force_apt_get: yes
+
+- name: Install psycopg2
+  tags:
+    - provision-postgres
+  apt:
+    name: python3-psycopg2
+    state: latest
+    force_apt_get: yes
+
+- name: Create application database user
+  tags:
+    - provision-postgres
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    name: "{{ database_user }}"
+    password: "{{ database_password }}"
+
+- name: Create application database
+  tags:
+    - provision-postgres
+  become: yes
+  become_user: postgres
+  postgresql_db:
+    name: "{{ database_name }}"
+    owner: "{{ database_user }}"
+    encoding: UTF-8
+    lc_collate: en_US.UTF-8
+    lc_ctype: en_US.UTF-8
+
+- name: Enable postgis extension in application database
+  tags:
+    - provision-postgres
+  become: yes
+  become_user: postgres
+  postgresql_ext:
+    name: postgis
+    db: "{{ database_name }}"
+
+# Nginx
+
+- name: Install latest version of Nginx
+  tags:
+    - provision-nginx
+  apt:
+    name: nginx
+    state: latest
+    force_apt_get: yes
+
+- name: Remove unused Nginx config
+  tags:
+    - provision-nginx
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/nginx/sites-available
+    - /etc/nginx/sites-enabled
+    - /etc/nginx/snippets
+    - /etc/nginx/uwsgi_params
+    - /var/www/html/index.nginx-debian.html
+  notify: "restart nginx"
+
+- name: Copy Nginx config
+  tags:
+    - provision-nginx
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx
+  notify: "restart nginx"
+
+- name: Copy Nginx vhosts
+  tags:
+    - provision-nginx
+  copy:
+    src: "{{ hostname }}.conf"
+    dest: /etc/nginx/conf.d
+  notify: "restart nginx"
+
+# Node.js
+
+- name: Get Node.js setup script
+  tags:
+    - provision-nodejs
+  get_url:
+    url: https://deb.nodesource.com/setup_10.x
+    dest: /root/node-setup_10.x
+    mode: u=rwx,g=,o=
+
+- name: Run Node.js setup script
+  tags:
+    - provision-nodejs
+  command: /root/node-setup_10.x
+
+- name: Install Node.js
+  tags:
+    - provision-nodejs
+  apt:
+    name: nodejs
+    state: latest
+    force_apt_get: yes
+
+- name: Upgrade npm
+  tags:
+    - provision-nodejs
+  command: npm -g install npm@latest
+
+- name: Install pm2
+  tags:
+    - provision-nodejs
+  command: npm -g install pm2@latest
+
+- name: Install systemd script
+  tags:
+    - provision-nodejs
+  command: /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u mystops --hp /sites/mystops.io
+
+# Site
+
+- name: Create directory for sites
+  tags:
+    - provision-site
+  file:
+    path: /sites
+    state: directory
+
+- name: Create application user and home directory
+  tags:
+    - provision-site
+  user:
+    name: "{{ site_user }}"
+    home: "{{ remote_site_root }}"
+    shell: /bin/bash
+
+- name: Create site subdirectories
+  tags:
+    - provision-site
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ site_user }}"
+  with_items:
+    - "{{ remote_backend_dir }}"
+    - "{{ remote_frontend_dir }}"

@@ -1,0 +1,158 @@
+@import "../styles/mixins.scss";
+@import "../styles/variables.scss";
+
+.Search {
+  position: absolute;
+  width: $panel-width;
+  z-index: 3;
+
+  form {
+    @include floating-element();
+
+    position: absolute;
+    top: $standard-spacing;
+    left: $standard-spacing;
+    width: $panel-width - $twice-standard-spacing;
+    z-index: 1;
+
+    display: flex;
+    flex-direction: row;
+    margin: 0;
+    padding: 0;
+
+    background-color: white;
+
+    input {
+      border: none;
+      flex: 1;
+      font-size: 16px;
+      line-height: 22px;
+      height: 40px;
+      min-width: 10em;
+      outline: 0;
+      margin: 0;
+      padding: 0 $quarter-standard-spacing 0 (32px + $half-standard-spacing);
+
+      @media (max-width: $xs-width - 1px) {
+        font-size: 14px;
+      }
+    }
+
+    span {
+      color: gray;
+      font-size: 22px;
+      line-height: 1;
+      margin: $half-standard-spacing 0;
+    }
+
+    @media (max-width: $xs-width - 1px) {
+      top: $quarter-standard-spacing;
+      left: $quarter-standard-spacing;
+      right: $quarter-standard-spacing;
+      width: auto;
+    }
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding-left: 0;
+  }
+
+  .result {
+    max-height: 400px;
+    overflow-x: hidden;
+  }
+
+  .error {
+    @include floating-element();
+
+    background-color: white;
+    color: red;
+    margin: 0;
+    padding: $standard-spacing;
+    padding-top: 40px + $twice-standard-spacing;
+
+    .error-title {
+      font-size: 20px;
+      margin-bottom: $standard-spacing;
+    }
+
+    .error-message > * {
+      margin-top: 0;
+      margin-bottom: $half-standard-spacing;
+      padding: 0;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    @media (max-width: $xs-width - 1px) {
+      padding: $half-standard-spacing;
+      padding-top: 40px + $standard-spacing;
+    }
+  }
+
+  ul.stops {
+    background-color: white;
+    box-shadow: 2px 2px 4px;
+    padding-top: 40px + $twice-standard-spacing;
+
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+
+    > li.updateTime {
+      border-top: 1px solid $menu-item-border-color;
+      padding: $half-standard-spacing $standard-spacing;
+      text-align: right;
+    }
+
+    > li.stop {
+      > .heading {
+        background-color: #e0e0e0;
+        border-top: 1px solid #a0a0a0;
+        border-bottom: 1px solid #a0a0a0;
+        font-size: 105%;
+        font-weight: bold;
+        padding: $half-standard-spacing $standard-spacing;
+      }
+
+      > ul.routes {
+        > li.route {
+          border-bottom: 1px solid $menu-item-border-color;
+          padding: $half-standard-spacing $standard-spacing;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          > .heading {
+            font-weight: bold;
+          }
+
+          > ul.arrivals {
+            > li.arrival {
+              display: flex;
+              flex-direction: row;
+              padding: $quarter-standard-spacing 0;
+              > div {
+                flex: 50%;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    @media (max-width: $xs-width - 1) {
+      padding-top: 40px + $half-standard-spacing;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: $xs-width - 1px) {
+    width: 100%;
+  }
+}

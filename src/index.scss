@@ -1,0 +1,80 @@
+@import "./styles/mixins.scss";
+@import "./styles/variables.scss";
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: $text-color;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: $font-size;
+  line-height: $line-height;
+}
+
+a {
+  color: #084c8d;
+  text-decoration: none;
+  &:hover {
+    color: orange;
+    text-decoration: underline;
+  }
+}
+
+#root {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+button.icon-button,
+button.material-icons {
+  display: inline-block;
+
+  width: 32px;
+  height: 32px;
+
+  margin: $quarter-standard-spacing;
+  padding: 0;
+
+  background-color: white;
+  color: $link-color;
+  border: 1px solid white;
+
+  &:hover {
+    border: 1px solid lighten($link-color, 25%);
+    box-shadow: 0 0 1px;
+    cursor: pointer;
+  }
+
+  &:disabled {
+    color: gray;
+    &:hover {
+      border: none;
+      box-shadow: none;
+      cursor: auto;
+    }
+  }
+}
+
+.hidden-xs {
+  @include hidden-xs();
+}
+
+.hidden-sm {
+  @include hidden-sm();
+}
+
+.hidden-md {
+  @include hidden-md();
+}
+
+.visible-xs {
+  @include visible-xs();
+}
+
+.visible-sm {
+  @include visible-sm();
+}

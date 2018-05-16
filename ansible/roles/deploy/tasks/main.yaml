@@ -1,0 +1,72 @@
+---
+# Back end
+
+- name: Copy back end files
+  tags:
+    - deploy-backend
+  synchronize:
+    src: "{{ root }}"
+    dest: "{{ remote_backend_dir }}"
+    rsync_path: sudo -u mystops rsync
+    delete: yes
+    rsync_opts:
+      - "--chmod=u=rwX,g=rX,o="
+      - "--exclude=/.*"
+      - "--exclude=/ansible/"
+      - "--exclude=/build/"
+      - "--exclude=/docker/"
+      - "--exclude=/node_modules/"
+      - "--exclude=/public/"
+      - "--exclude=/src/"
+      - "--exclude=/trimet/data/"
+      - "--exclude=ansible.cfg"
+      - "--exclude=docker-compose.yaml"
+      - "--exclude=Pipfile*"
+      - "--exclude=README*"
+      - "--exclude=TODO"
+
+- name: Install back end
+  tags:
+    - deploy-backend
+  command: npm install --production
+  args:
+    chdir: "{{ remote_backend_dir }}"
+
+- name: Restart back end
+  tags:
+    - deploy-backend
+  #command: pm2 restart --env production process.yaml
+  command: pm2 restart process.yaml
+  args:
+    chdir: "{{ remote_backend_dir }}"
+
+- name: Save PM2 process
+  tags:
+    - deploy-backend
+  command: pm2 save
+  args:
+    chdir: "{{ remote_backend_dir }}"
+
+# Front end
+
+- name: Copy front end files
+  tags:
+    - deploy-frontend
+  synchronize:
+    src: ../build/
+    dest: "{{ remote_frontend_dir }}"
+    rsync_path: sudo -u mystops rsync
+    delete: yes
+
+- name: Set ownership & permissions of front end files
+  become: yes
+  become_user: root
+  tags:
+    - deploy-frontend
+  file:
+    path: "{{ remote_frontend_dir }}"
+    state: directory
+    recurse: yes
+    owner: "{{ site_user }}"
+    group: www-data
+    mode: u=rwX,g=rX,o=

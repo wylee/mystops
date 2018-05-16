@@ -1,0 +1,8 @@
+.tmp/
+/ansible/**/*.retry
+/build/
+/config/local*
+/trimet/data/
+/node_modules/
+/src/**/*.css
+.env*.local

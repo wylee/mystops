@@ -1,0 +1,12 @@
+{
+  "extends": "../.eslintrc",
+  "env": {
+    "browser": true
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "sourceType": "module"
+  }
+}

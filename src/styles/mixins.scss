@@ -1,0 +1,145 @@
+@import "./variables.scss";
+
+@mixin floating-element() {
+  border-radius: 2px;
+  box-shadow: 2px 2px 4px;
+}
+
+@mixin title() {
+  color: lighten($text-color, 10%);
+  font-size: 24px;
+  line-height: 1;
+  padding: ($standard-spacing + $half-standard-spacing) $standard-spacing;
+  text-shadow: 1px 1px 2px;
+
+  a {
+    color: lighten($text-color, 10%);
+    text-decoration: none;
+  }
+
+  @media (max-width: $xs-width - 1px) {
+    font-size: 16px;
+    padding: $standard-spacing;
+  }
+}
+
+@mixin menu(
+  $background-color: rgba(255, 255, 255, 0.99),
+  $border-radius: 2px,
+  $item-border: 1px solid $menu-item-border-color,
+  $item-color: $menu-item-color,
+  $item-hover-color: $menu-item-color,
+  $item-hover-background-color: $menu-item-background-color-hover,
+  $item-link-color: $link-color,
+  $item-link-hover-color: $link-hover-color,
+  $item-margin: 0,
+  $item-padding: $standard-spacing
+) {
+  background-color: $background-color;
+  border-radius: $border-radius;
+  box-shadow: 2px 2px 4px;
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+
+  > li {
+    border-bottom: $item-border;
+
+    margin: 0;
+    padding: 0;
+
+    &:hover {
+      background-color: $item-hover-background-color;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    // Each <li> must contain a top level element
+    > * {
+      color: $item-color;
+
+      display: flex;
+      flex-direction: row;
+      align-content: center;
+
+      line-height: 24px;
+      margin: $item-margin;
+      padding: $item-padding;
+
+      > * {
+        margin-right: $quarter-standard-spacing;
+        &:last-child {
+          margin-right: 0;
+        }
+      }
+    }
+
+    a {
+      color: $item-link-color;
+      text-decoration: none;
+      &:hover {
+        color: $item-link-hover-color;
+      }
+    }
+  }
+
+  > li.section-heading {
+    font-weight: bold;
+    &:hover {
+      background-color: $background-color;
+    }
+  }
+
+  > li.info {
+    color: gray;
+    font-size: 90%;
+    font-style: italic;
+
+    &:hover {
+      background-color: $background-color;
+    }
+
+    > * {
+      flex-direction: column;
+      line-height: 1.25;
+      > * {
+        margin: 0 0 $standard-spacing 0;
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
+
+@mixin hidden-xs {
+  @media (max-width: $xs-width - 1px) {
+    display: none !important;
+  }
+}
+
+@mixin hidden-sm {
+  @media (max-width: $sm-width - 1px) {
+    display: none !important;
+  }
+}
+
+@mixin hidden-md {
+  @media (max-width: $md-width - 1px) {
+    display: none !important;
+  }
+}
+
+@mixin visible-xs {
+  @media (min-width: $xs-width) {
+    display: none !important;
+  }
+}
+
+@mixin visible-sm {
+  @media (min-width: $sm-width) {
+    display: none !important;
+  }
+}

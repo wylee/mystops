@@ -1,0 +1,27 @@
+$xs-width: 480px;
+$sm-width: 600px;
+$md-width: 840px;
+
+$font-size: 14px;
+$line-height: 1.2;
+$text-color: #303030;
+
+$link-color: steelblue;
+$link-hover-color: orange;
+
+$standard-spacing: 16px;
+$quarter-standard-spacing: $standard-spacing / 4;
+$half-standard-spacing: $standard-spacing / 2;
+$twice-standard-spacing: $standard-spacing * 2;
+
+$border-radius: $quarter-standard-spacing;
+
+$panel-width: 400px;
+$panel-width-xs: 300px;
+
+// Menus
+$menu-width: 320px;
+$menu-width-sm: 240px;
+$menu-item-background-color-hover: #f8f8f8;
+$menu-item-border-color: #e0e0e0;
+$menu-item-color: $text-color;
