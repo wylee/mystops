@@ -6,10 +6,11 @@ build-backend = "poetry.masonry.api"
 name = "mystops"
 version = "0.0.0"
 authors = ["Wyatt Baldwin <self@wyattbaldwin.com>"]
+description = "TriMet arrivals on a map"
 
 [tool.poetry.dependencies]
 python = "^3.8"
 
 [tool.poetry.dev-dependencies]
-ansible = "*"
-runcommands = "1.0a42"
+ansible = "^2.9.7"
+runcommands = "^1.0a56"
