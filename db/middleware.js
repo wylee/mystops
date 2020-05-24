@@ -20,7 +20,11 @@ function transactionMiddleware(req, res, next) {
         });
       }
 
-      res.on('close', rollback);
+      res.on('close', (...args) => {
+        if (!res.finished) {
+          rollback();
+        }
+      });
 
       res.on('finish', () => {
         res.statusCode < 400 ? commit() : rollback();

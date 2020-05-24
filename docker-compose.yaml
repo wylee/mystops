@@ -10,9 +10,7 @@ volumes:
 
 services:
   postgres:
-    image: mystops-postgres
-    build:
-      context: docker/postgres
+    image: postgis/postgis:10-2.5
     environment:
       - POSTGRES_USER=mystops
       - POSTGRES_PASSWORD=mystops
