@@ -12,5 +12,5 @@ description = "TriMet arrivals on a map"
 python = "^3.8"
 
 [tool.poetry.dev-dependencies]
-ansible = "^2.9.9"
+ansible = "^2.10.0"
 runcommands = "^1.0a56"
