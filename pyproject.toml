@@ -18,7 +18,7 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.8"
 Django = "^3.2.4"
-django-local-settings = "^2.0a4"
+django-local-settings = "^2.0a5"
 #django-local-settings = { path = "../django-local-settings", develop = true }
 djangorestframework = "^3.12.4"
 psycopg2 = "^2.8.6"
