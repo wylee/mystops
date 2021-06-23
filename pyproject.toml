@@ -39,15 +39,14 @@ env = "dev"
 
 [tool.runcommands.envs]
 dev = {}
-new.hostname = "new.mystops.io"
 prod.hostname = "mystops.io"
 
 [tool.runcommands.args]
-ansible.env = "new"
-provision.env = "new"
-prepare.env = "new"
-deploy.env = "new"
-upgrade_remote.env = "new"
+ansible.env = "prod"
+provision.env = "prod"
+prepare.env = "prod"
+deploy.env = "prod"
+upgrade_remote.env = "prod"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
