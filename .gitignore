@@ -1,8 +1,11 @@
-.tmp/
+/.env.dev
+/.env.new
+/.env.prod
+/.env*.local
 /ansible/**/*.retry
 /build/
-/config/local*
-/trimet/data/
+/data/trimet/
 /node_modules/
+/package-lock.json
+/poetry.lock
 /src/**/*.css
-.env*.local

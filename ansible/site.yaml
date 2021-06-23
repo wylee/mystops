@@ -2,7 +2,7 @@
 - name: Provision
   hosts:
     - web
-  become: yes
+  become: true
   roles:
     - base
     - provision
@@ -21,7 +21,7 @@
 - name: Deploy
   hosts:
     - web
-  become: yes
+  become: true
   become_user: mystops
   roles:
     - base

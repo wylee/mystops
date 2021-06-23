@@ -17,15 +17,36 @@
   apt:
     name: "*"
     state: latest
-    force_apt_get: yes
+    force_apt_get: true
+
+- name: Install packages
+  tags:
+    - provision-install-packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+    force_apt_get: true
+  with_items:
+    - acl
+    - gcc
+    - gdal-bin
+    - libpq-dev
+    - memcached
+    - libmemcached-tools
+    - python3.9
+    - python3-dev
+    - python3-venv
+    - uwsgi
+    - uwsgi-plugin-python3
+
+- name: Enable uWSGI
+  tags:
+    - enable-uwsgi
+  service:
+    name: uwsgi
+    enabled: true
 
 # SSL (Let's Encrypt)
-
-- name: Add certbot apt repo
-  tags:
-    - provision-ssl
-  apt_repository:
-    repo: ppa:certbot/certbot
 
 - name: Install certbot
   tags:
@@ -33,14 +54,7 @@
   apt:
     name: certbot
     state: latest
-    force_apt_get: yes
-
-- name: Stop Nginx
-  tags:
-    - provision-ssl
-  service:
-    name: nginx
-    state: stopped
+    force_apt_get: true
 
 - name: Create cert
   tags:
@@ -69,30 +83,23 @@
     path: /etc/pki/nginx/{{ hostname }}.pem
     size: 2048
 
-- name: Start Nginx
-  tags:
-    - provision-ssl
-  service:
-    name: nginx
-    state: started
-
 # PostgreSQL
 
 - name: Install Postgres server
   tags:
     - provision-postgres
   apt:
-    name: postgresql-9.5
+    name: postgresql
     state: latest
-    force_apt_get: yes
+    force_apt_get: true
 
 - name: Install PostGIS
   tags:
     - provision-postgres
   apt:
-    name: postgresql-9.5-postgis-2.2
+    name: postgresql-12-postgis-3
     state: latest
-    force_apt_get: yes
+    force_apt_get: true
 
 - name: Install psycopg2
   tags:
@@ -100,12 +107,12 @@
   apt:
     name: python3-psycopg2
     state: latest
-    force_apt_get: yes
+    force_apt_get: true
 
 - name: Create application database user
   tags:
     - provision-postgres
-  become: yes
+  become: true
   become_user: postgres
   postgresql_user:
     name: "{{ database_user }}"
@@ -114,19 +121,16 @@
 - name: Create application database
   tags:
     - provision-postgres
-  become: yes
+  become: true
   become_user: postgres
   postgresql_db:
     name: "{{ database_name }}"
     owner: "{{ database_user }}"
-    encoding: UTF-8
-    lc_collate: en_US.UTF-8
-    lc_ctype: en_US.UTF-8
 
 - name: Enable postgis extension in application database
   tags:
     - provision-postgres
-  become: yes
+  become: true
   become_user: postgres
   postgresql_ext:
     name: postgis
@@ -134,13 +138,13 @@
 
 # Nginx
 
-- name: Install latest version of Nginx
+- name: Install Nginx
   tags:
     - provision-nginx
   apt:
     name: nginx
     state: latest
-    force_apt_get: yes
+    force_apt_get: true
 
 - name: Remove unused Nginx config
   tags:
@@ -149,10 +153,11 @@
     path: "{{ item }}"
     state: absent
   with_items:
+    - /etc/nginx/fastcgi.conf
+    - /etc/nginx/fastcgi_params
     - /etc/nginx/sites-available
     - /etc/nginx/sites-enabled
     - /etc/nginx/snippets
-    - /etc/nginx/uwsgi_params
     - /var/www/html/index.nginx-debian.html
   notify: "restart nginx"
 
@@ -161,63 +166,10 @@
     - provision-nginx
   copy:
     src: nginx.conf
-    dest: /etc/nginx
+    dest: /etc/nginx/
   notify: "restart nginx"
 
-- name: Copy Nginx vhosts
-  tags:
-    - provision-nginx
-  copy:
-    src: "{{ hostname }}.conf"
-    dest: /etc/nginx/conf.d
-  notify: "restart nginx"
-
-# Node.js
-
-- name: Get Node.js setup script
-  tags:
-    - provision-nodejs
-  get_url:
-    url: https://deb.nodesource.com/setup_10.x
-    dest: /root/node-setup_10.x
-    mode: u=rwx,g=,o=
-
-- name: Run Node.js setup script
-  tags:
-    - provision-nodejs
-  command: /root/node-setup_10.x
-
-- name: Install Node.js
-  tags:
-    - provision-nodejs
-  apt:
-    name: nodejs
-    state: latest
-    force_apt_get: yes
-
-- name: Upgrade npm
-  tags:
-    - provision-nodejs
-  command: npm -g install npm@latest
-
-- name: Install pm2
-  tags:
-    - provision-nodejs
-  command: npm -g install pm2@latest
-
-- name: Install systemd script
-  tags:
-    - provision-nodejs
-  command: /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u mystops --hp /sites/mystops.io
-
-# Site
-
-- name: Create directory for sites
-  tags:
-    - provision-site
-  file:
-    path: /sites
-    state: directory
+# Site (directory containing site versions)
 
 - name: Create application user and home directory
   tags:
@@ -226,14 +178,3 @@
     name: "{{ site_user }}"
     home: "{{ remote_site_root }}"
     shell: /bin/bash
-
-- name: Create site subdirectories
-  tags:
-    - provision-site
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ site_user }}"
-  with_items:
-    - "{{ remote_backend_dir }}"
-    - "{{ remote_frontend_dir }}"

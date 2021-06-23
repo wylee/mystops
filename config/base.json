@@ -1,7 +1,0 @@
-{
-  "debug": false,
-  "port": 8000,
-  "trimet": {
-    "apiKey": null
-  }
-}

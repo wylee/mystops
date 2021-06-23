@@ -38,15 +38,21 @@ one from the API registration page.
 
 ### Installation
 
-`npm install` and then `npm start` should do the trick.
+`poetry install`
+`npm install`
+
+### Running
+
+`run dev-server`
+`npm start`
 
 ### Stack
 
-* Linux (Ubuntu 16.04)
-* PostgreSQL
-* PostGIS
+* Linux (Ubuntu 20.04)
+* PostgreSQL 12
+* PostGIS 3
+* Python 3.9
+* Django 3.2
 * TypeScript
-* Node.js
-* Express
-* React with Redux (thinking of switching to MobX)
+* React with Redux
 * OpenLayers

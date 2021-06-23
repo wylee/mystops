@@ -1,16 +1,54 @@
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
-
 [tool.poetry]
 name = "mystops"
-version = "0.0.0"
-authors = ["Wyatt Baldwin <self@wyattbaldwin.com>"]
+version = "2.0a1"
 description = "TriMet arrivals on a map"
+authors = ["Wyatt Baldwin <self@wyattbaldwin.com>"]
+license = "UNLICENSED"
+readme = "README.md"
+
+packages = [
+    { include = "mystops", from = "src/api" }
+]
+
+include = [
+    "commands.py",
+    "src/api/mystops/*.cfg",
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+Django = "^3.2.4"
+django-local-settings = "^2.0a4"
+#django-local-settings = { path = "../django-local-settings", develop = true }
+djangorestframework = "^3.12.4"
+psycopg2 = "^2.8.6"
+pymemcache = "^3.4.4"
+pytz = "^2021.1"
+requests = "^2.25.1"
+runcommands = "*"
+tzlocal = "^2.1"
 
 [tool.poetry.dev-dependencies]
-ansible = "^2.9.9"
-runcommands = "^1.0a56"
+ansible = "*"
+black = "*"
+flake8 = "*"
+django-cors-headers = "^3.7.0"
+
+[tool.runcommands.globals]
+env = "dev"
+
+[tool.runcommands.envs]
+dev = {}
+new.hostname = "new.mystops.io"
+prod.hostname = "mystops.io"
+
+[tool.runcommands.args]
+ansible.env = "new"
+provision.env = "new"
+prepare.env = "new"
+deploy.env = "new"
+upgrade_remote.env = "new"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
