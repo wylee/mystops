@@ -1,10 +1,4 @@
-import { useAppSelector } from "../hooks";
-
-import { selectResult } from "./slice";
-
-const Result = () => {
-  const result = useAppSelector(selectResult);
-
+const Result = ({ result }) => {
   return result.count ? (
     <ul className="stops">
       <li className="updateTime">Updated at {result.updateTime}</li>

@@ -3,7 +3,7 @@ import * as React from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
 
 import { STREET_LEVEL_ZOOM } from "./const";
-import { closeContextMenu, selectContextMenuState, setCenter } from "./slice";
+import { closeContextMenu, selectContextMenuState, setCenter, setCenterAndZoom } from "./slice";
 
 const ContextMenu = ({ map }) => {
   const dispatch = useAppDispatch();
@@ -28,7 +28,7 @@ const ContextMenu = ({ map }) => {
           onClick={() => {
             const { left: x, top: y } = contextMenuState;
             const center = map.getCoordinateFromPixel([x, y]);
-            dispatch(setCenter({ center }));
+            dispatch(setCenter(center));
           }}
         >
           {" "}
@@ -43,7 +43,7 @@ const ContextMenu = ({ map }) => {
             const center = map.getCoordinateFromPixel([x, y]);
             const currentZoom = map.getZoom();
             const zoom = currentZoom < STREET_LEVEL_ZOOM ? STREET_LEVEL_ZOOM : undefined;
-            dispatch(setCenter({ center, zoom }));
+            dispatch(setCenterAndZoom({ center, zoom }));
           }}
         >
           Zoom in here

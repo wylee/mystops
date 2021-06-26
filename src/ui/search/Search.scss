@@ -7,6 +7,18 @@
   width: $panel-width;
   z-index: 3;
 
+  .progress-indicator {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    z-index: 100;
+    animation: blinker 1.5s linear infinite;
+    background-color: seagreen;
+    box-shadow: 1px 1px 2px seagreen;
+  }
+
   form {
     @include floating-element();
 

@@ -21,10 +21,8 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "exclude": [
-    "src/api/mystops"
-  ],
   "include": [
-    "src"
+    "src/index.tsx",
+    "src/ui"
   ]
 }

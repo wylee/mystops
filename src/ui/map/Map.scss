@@ -148,6 +148,19 @@
   }
 }
 
+.Map > .geolocator-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: $twice-standard-spacing;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: $border-radius;
+  border: 2px solid rgb(8, 76, 141);
+  text-align: center;
+  z-index: 14;
+}
+
 .Map > .ContextMenu {
   @include menu(
     $item-border: none,

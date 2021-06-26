@@ -1,3 +1,1 @@
-import main from "./ui";
-
-main();
+import "./ui";

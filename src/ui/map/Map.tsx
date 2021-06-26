@@ -1,12 +1,14 @@
-import "./Map.scss";
-import * as React from "react";
+import React, { useState } from "react";
 import { renderToString } from "react-dom/server";
+
+import { buffer as bufferExtent, containsExtent } from "ol/extent";
 
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { closeMainMenu, setBottomSheetContent } from "../slice";
-import { resetSearchState, search, selectSelectedStops, setError } from "../search/slice";
 
-import { MAPBOX_WORDMARK_IMAGE_DATA } from "./const";
+import { toggleTerm, setSubmit, resetSearchState, selectResult } from "../search/slice";
+
+import { FEATURE_LAYER_MAX_RESOLUTION, MAPBOX_WORDMARK_IMAGE_DATA } from "./const";
 
 import {
   initialState,
@@ -25,6 +27,7 @@ import {
   setSize,
   setUserLocation,
   selectUserLocation,
+  setCenterAndZoom,
 } from "./slice";
 
 import Attributions from "./Attributions";
@@ -32,10 +35,19 @@ import ContextMenu from "./ContextMenu";
 import StopInfo from "./StopInfo";
 import OpenLayersMap from "./OpenLayersMap";
 
+import { getExtentOfCoordinates } from "./utils";
+
+import "./Map.scss";
+import { Center } from "./types";
+
 const Map = () => {
+  const [map, setMap] = useState<OpenLayersMap | null>(null);
   const mapRef = React.useRef<OpenLayersMap | null>(null);
   const mapElRef = React.useRef(null);
   const overviewMapRef = React.useRef(null);
+
+  const [stopFeature, setStopFeature] = React.useState<any>(null);
+  const [geolocatorError, setGeolocatorError] = React.useState<string | null>(null);
 
   const dispatch = useAppDispatch();
 
@@ -44,120 +56,145 @@ const Map = () => {
   const zoom = useAppSelector(selectZoom);
   const extent = useAppSelector(selectExtent);
   const userLocation = useAppSelector(selectUserLocation);
-  const selectedStops = useAppSelector(selectSelectedStops);
 
-  const [stopFeature, setStopFeature] = React.useState<any>(null);
+  const result = useAppSelector(selectResult);
+
+  mapRef.current = map;
 
   // These send dispatched signals to the OL map
-  React.useEffect((): any => mapRef.current?.setBaseLayer(baseLayer), [baseLayer]);
-  React.useEffect((): any => mapRef.current?.setCenter(center, zoom), [center, zoom]);
-  React.useEffect((): any => mapRef.current?.fitExtent(extent), [extent]);
-  React.useEffect((): any => mapRef.current?.setSelectedStops(selectedStops), [selectedStops]);
-  React.useEffect((): any => mapRef.current?.showUserLocation(userLocation), [userLocation]);
+  React.useEffect((): any => map?.setBaseLayer(baseLayer), [map, baseLayer]);
+  React.useEffect(
+    (): any => map?.setCenterAndZoom(center, zoom).catch(() => {}),
+    [map, center, zoom]
+  );
+  React.useEffect((): any => map?.fitExtent(extent), [map, extent]);
+  React.useEffect((): any => map?.showUserLocation(userLocation), [map, userLocation]);
 
   React.useEffect(() => {
-    if (mapRef.current) {
-      return;
-    }
-    mapRef.current = new OpenLayersMap();
-  }, [mapRef.current]);
+    const map = new OpenLayersMap(mapElRef.current, overviewMapRef.current, center, zoom);
+    const stopsLayer = map.getFeatureLayer("Stops");
 
+    // map
+    //   .setCenterAndZoom(center, zoom)
+    //   .then(() => {
+    //     map.addListener("moveend", () => {
+    //       dispatch(setCenter(map.getCenter() as Center));
+    //       dispatch(setZoom(map.getZoom()));
+    //       dispatch(setExtent(map.getExtent()));
+    //       dispatch(setResolution(map.getResolution()));
+    //       dispatch(setSize(map.getSize()));
+    //     });
+    //
+    //     map.addFeatureListener(
+    //       "singleclick",
+    //       (feature) => {
+    //         dispatch(toggleTerm(feature.get("id").toString()));
+    //         dispatch(setSubmit(true));
+    //       },
+    //       () => dispatch(resetSearchState()),
+    //       stopsLayer
+    //     );
+    //
+    //     map.addListener("movestart", () => {
+    //       if (stopFeature) {
+    //         setStopFeature(null);
+    //       }
+    //     });
+    //
+    //     map.addFeatureListener(
+    //       "pointermove",
+    //       (feature) => {
+    //         if (feature !== stopFeature) {
+    //           setStopFeature(feature);
+    //         }
+    //       },
+    //       () => setStopFeature(null),
+    //       stopsLayer,
+    //       10
+    //     );
+    //
+    //     map.addGeolocatorListener("change", () => {
+    //       const position = map.geolocator.getPosition();
+    //       const accuracy = map.geolocator.getAccuracy();
+    //       const accuracyCoords = map.geolocator.getAccuracyGeometry().getCoordinates();
+    //       const heading = map.geolocator.getHeading() || 0;
+    //       dispatch(setUserLocation({ position, accuracy, accuracyCoords, heading, error: null }));
+    //     });
+    //
+    //     map.addGeolocatorListener(
+    //       "change",
+    //       () => dispatch(setCenterAndZoom({ center: map.geolocator.getPosition(), zoom: 18 })),
+    //       true
+    //     );
+    //
+    //     map.addGeolocatorListener("error", (error) => {
+    //       let errorMessage;
+    //
+    //       switch (error.code) {
+    //         case 1:
+    //           errorMessage =
+    //             "Access to location services have been disabled for this site. Check " +
+    //             "your browser location settings and try again.";
+    //           break;
+    //         case 3:
+    //           errorMessage = "Could not find location after 30 seconds.";
+    //           break;
+    //         default:
+    //           errorMessage = "Could not determine location.";
+    //       }
+    //
+    //       setGeolocatorError(errorMessage);
+    //
+    //       dispatch(
+    //         setUserLocation({
+    //           position: null,
+    //           accuracy: Infinity,
+    //           accuracyCoords: null,
+    //           heading: null,
+    //           error: errorMessage,
+    //         })
+    //       );
+    //     });
+    //   })
+    //   .catch(() => {});
+
+    setMap(map);
+
+    return () => map.cleanup();
+  }, []);
+
+  // Update extent and highlighted stops when results are updated
   React.useEffect(() => {
-    const map = mapRef.current;
-
     if (!map) {
       return;
     }
 
-    const stopsLayer = map.getFeatureLayer("Stops");
+    if (!result) {
+      map.setSelectedStops([]);
+      return;
+    }
 
-    map.initialize(mapElRef.current, overviewMapRef.current);
+    const view = map.getView();
+    const extent = map.getExtent();
+    const resolution = map.getResolution();
 
-    map.setCenter(center, zoom).then(() => {
-      map.addListener("moveend", () => {
-        dispatch(setCenter(map.getCenter()));
-        dispatch(setZoom(map.getZoom()));
-        dispatch(setExtent(map.getExtent()));
-        dispatch(setResolution(map.getResolution()));
-        dispatch(setSize(map.getSize()));
-      });
+    const stops = result.stops;
+    const stopIDs = stops.map((stop) => stop.id);
+    const coordinates = stops.map((stop) => stop.coordinates);
+    const newExtent = getExtentOfCoordinates(coordinates, false);
+    const doSetExtent =
+      !containsExtent(extent, newExtent) || resolution > FEATURE_LAYER_MAX_RESOLUTION;
 
-      map.addFeatureListener(
-        "singleclick",
-        (feature) => dispatch(search(feature.get("id").toString(), true, true)),
-        () => dispatch(resetSearchState()),
-        stopsLayer
-      );
+    map.setSelectedStops(stopIDs);
 
-      map.addListener("movestart", () => {
-        if (stopFeature) {
-          setStopFeature(null);
-        }
-      });
-
-      map.addFeatureListener(
-        "pointermove",
-        (feature) => {
-          if (feature !== stopFeature) {
-            setStopFeature(feature);
-          }
-        },
-        () => setStopFeature(null),
-        stopsLayer,
-        10
-      );
-
-      map.addGeolocatorListener("change", () => {
-        const position = map.geolocator.getPosition();
-        const accuracy = map.geolocator.getAccuracy();
-        const accuracyCoords = map.geolocator.getAccuracyGeometry().getCoordinates();
-        const heading = map.geolocator.getHeading() || 0;
-        dispatch(setUserLocation({ position, accuracy, accuracyCoords, heading, error: null }));
-      });
-
-      map.addGeolocatorListener(
-        "change",
-        () => dispatch(setCenter({ center: map.geolocator.getPosition(), zoom: 18 })),
-        true
-      );
-
-      map.addGeolocatorListener("error", (error) => {
-        let errorMessage;
-
-        switch (error.code) {
-          case 1:
-            errorMessage =
-              "Access to location services have been disabled for this site. Check " +
-              "your browser location settings and try again.";
-            break;
-          case 3:
-            errorMessage = "Could not find location after 30 seconds.";
-            break;
-          default:
-            errorMessage = "Could not determine location.";
-        }
-
-        dispatch(
-          setError({
-            title: "Could not access your location",
-            message: errorMessage,
-          })
-        );
-
-        dispatch(
-          setUserLocation({
-            position: null,
-            accuracy: Infinity,
-            accuracyCoords: null,
-            heading: null,
-            error: errorMessage,
-          })
-        );
-      });
-    });
-
-    return () => map.dispose();
-  }, [mapRef.current]);
+    if (doSetExtent) {
+      const size = map.getSize();
+      const newResolution = view.getResolutionForExtent(newExtent, size);
+      const buffer = newResolution * 46;
+      const bufferedExtent = bufferExtent(newExtent, buffer);
+      dispatch(setExtent(bufferedExtent));
+    }
+  }, [dispatch, map, result]);
 
   return (
     <div
@@ -172,6 +209,24 @@ const Map = () => {
         dispatch(openContextMenu([top, left]));
       }}
     >
+      {geolocatorError ? (
+        <div className="geolocator-error">
+          <p>{geolocatorError}</p>
+          <p>
+            <button
+              title="Dismiss this notification"
+              type="button"
+              className="material-icons"
+              onClick={() => {
+                setGeolocatorError(null);
+              }}
+            >
+              clear
+            </button>
+          </p>
+        </div>
+      ) : null}
+
       <div
         className="controls bottom-right column"
         onContextMenu={(event) => {
@@ -186,7 +241,7 @@ const Map = () => {
           onClick={() => {
             const center = userLocation.position;
             if (center) {
-              dispatch(setCenter({ center }));
+              dispatch(setCenter(center));
             }
           }}
         >
@@ -197,7 +252,7 @@ const Map = () => {
           title="Zoom to full extent"
           className="material-icons hidden-xs"
           onClick={() =>
-            dispatch(setCenter({ center: initialState.center, zoom: initialState.zoom }))
+            dispatch(setCenterAndZoom({ center: initialState.center, zoom: initialState.zoom }))
           }
         >
           public
@@ -241,7 +296,7 @@ const Map = () => {
             href="https://www.mapbox.com/about/maps/"
             title="Map tiles and styling provided by Mapbox"
           >
-            <img src={MAPBOX_WORDMARK_IMAGE_DATA} height="18" />
+            <img src={MAPBOX_WORDMARK_IMAGE_DATA} height="18" alt="Mapbox" />
           </a>
         </div>
 

@@ -56,15 +56,18 @@ export const slice = createSlice({
     setBaseLayer: (state, action: PayloadAction<string>) => {
       state.baseLayer = action.payload;
     },
-    setCenter: (state, action: PayloadAction<CenterZoom>) => {
+    setCenter: (state, action: PayloadAction<Center>) => {
+      state.center = action.payload;
+    },
+    setZoom: (state, action: PayloadAction<ZoomLevel>) => {
+      state.zoom = action.payload;
+    },
+    setCenterAndZoom: (state, action: PayloadAction<CenterZoom>) => {
       const { center, zoom } = action.payload;
       state.center = center;
       if (typeof zoom !== "undefined") {
         state.zoom = zoom;
       }
-    },
-    setZoom: (state, action: PayloadAction<ZoomLevel>) => {
-      state.zoom = action.payload;
     },
     zoomIn: (state) => {
       state.zoom = state.zoom + 1;
@@ -100,6 +103,7 @@ export const slice = createSlice({
 export const {
   setCenter,
   setZoom,
+  setCenterAndZoom,
   setExtent,
   setResolution,
   setSize,

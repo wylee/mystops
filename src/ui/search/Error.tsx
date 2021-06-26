@@ -1,18 +1,12 @@
 import * as React from "react";
 
-import { useAppSelector } from "../hooks";
-
-import { selectError } from "./slice";
-
-const Error = () => {
-  const error = useAppSelector(selectError);
-
+const Error = ({ error }) => {
   return error ? (
     <div className="results error">
-      <div className="error-title">{error.title || "Whoops!"}</div>
+      <div className="error-title">{error.data.title || "Whoops!"}</div>
       <div className="error-message">
-        <p>{error.message}</p>
-        <p>{error.detail}</p>
+        <p>{error.data.explanation}</p>
+        {error.data.detail ? <p>{error.data.detail}</p> : null}
       </div>
     </div>
   ) : null;

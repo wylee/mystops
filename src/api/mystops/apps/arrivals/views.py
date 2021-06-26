@@ -85,14 +85,13 @@ def arrivals(request):
     return JsonResponse(arrivals)
 
 
-def make_error_response(status, title, message, detail=None):
+def make_error_response(status, title, explanation, detail=None):
+    # { error: { status: 500, data: { message: 'error reasons' } };
     return JsonResponse(
         {
-            "error": {
-                "title": title,
-                "message": message,
-                "detail": detail,
-            }
+            "title": title,
+            "explanation": explanation,
+            "detail": detail,
         },
         status=status,
     )

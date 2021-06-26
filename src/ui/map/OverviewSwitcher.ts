@@ -12,7 +12,7 @@ export default class OverviewSwitcher {
   baseLayer: any;
   baseLayerIndex = 0;
 
-  constructor(mainMap, baseLayers) {
+  constructor(mainMap, target, baseLayers) {
     this.mainMap = mainMap;
 
     let numLayers = baseLayers.length;
@@ -21,11 +21,11 @@ export default class OverviewSwitcher {
       const previous = i === 0 ? numLayers - 1 : i - 1;
       const visible = baseLayers[previous].getVisible();
       const baseLayer = new TileLayer({
-        label: layer.get("label"),
-        shortLabel: layer.get("shortLabel"),
         source: layer.getSource(),
         visible,
       });
+      baseLayer.set("label", layer.get("label"));
+      baseLayer.set("shortLabel", layer.get("shortLabel"));
       if (visible) {
         this.baseLayer = baseLayer;
         this.baseLayerIndex = i;
@@ -34,6 +34,7 @@ export default class OverviewSwitcher {
     });
 
     this.map = new Map({
+      target,
       controls: [],
       interactions: [],
       layers: this.baseLayers,
@@ -54,6 +55,10 @@ export default class OverviewSwitcher {
     mainMapView.on("change:center", () => {
       view.setCenter(mainMapView.getCenter());
     });
+  }
+
+  cleanup() {
+    this.map.setTarget(undefined);
   }
 
   setBaseLayerByIndex(index) {

@@ -7,7 +7,6 @@ import Feature from "ol/Feature";
 import Geolocation from "ol/Geolocation";
 import Map from "ol/Map";
 import Point from "ol/geom/Point";
-import Polygon from "ol/geom/Polygon";
 import View from "ol/View";
 
 import OSMSource from "ol/source/OSM";
@@ -29,17 +28,16 @@ import {
   MAX_ZOOM,
   MIN_ZOOM,
   FEATURE_LAYER_MAX_RESOLUTION,
-  USER_LOCATION_ACCURACY_THRESHOLD,
 } from "./const";
 
 import { STOP_STYLE, STOP_STYLE_SELECTED, USER_LOCATION_STYLE } from "./styles";
-import { transform, transformExtent } from "./utils";
+import { transformExtent } from "./utils";
 import { Center, ZoomLevel } from "./types";
 import OverviewSwitcher from "./OverviewSwitcher";
 import { unByKey } from "ol/Observable";
 
 export default class OpenLayersMap {
-  listenerKeys: number[];
+  listenerKeys: any[];
   baseLayers: TileLayer[];
   baseLayer: any;
   featureLayers: Array<VectorLayer>;
@@ -50,7 +48,7 @@ export default class OpenLayersMap {
   overviewSwitcher: OverviewSwitcher;
   _geolocator: any;
 
-  constructor() {
+  constructor(target, overviewMapTarget, center, zoom) {
     const baseLayers: any = [];
 
     if (DEBUG) {
@@ -80,9 +78,12 @@ export default class OpenLayersMap {
     allLayers.push(userLocationLayer);
 
     const map = new Map({
+      target,
       controls: [],
       layers: allLayers,
       view: new View({
+        center,
+        zoom,
         minZoom: MIN_ZOOM,
         maxZoom: MAX_ZOOM,
       }),
@@ -96,7 +97,7 @@ export default class OpenLayersMap {
     this.selectedStops = [];
     this.map = map;
     this.view = map.getView();
-    this.overviewSwitcher = new OverviewSwitcher(this, baseLayers);
+    this.overviewSwitcher = new OverviewSwitcher(this, overviewMapTarget, baseLayers);
   }
 
   initialize(target, overviewMapTarget) {
@@ -104,10 +105,10 @@ export default class OpenLayersMap {
     this.overviewSwitcher.initialize(overviewMapTarget, 12);
   }
 
-  dispose() {
-    this.map.setTarget(null);
+  cleanup() {
+    this.map.setTarget(undefined);
+    this.overviewSwitcher.cleanup();
     this.listenerKeys.forEach((key) => unByKey(key));
-    this.geolocator.listenerKeys.forEach((key) => unByKey(key));
   }
 
   addListener(type, listener, once = false) {
@@ -153,11 +154,19 @@ export default class OpenLayersMap {
   }
 
   getResolution() {
-    return this.view.getResolution();
+    const resolution = this.view.getResolution();
+    if (typeof resolution === "undefined") {
+      throw new Error("Map resolution not set");
+    }
+    return resolution;
   }
 
   getSize() {
-    return this.map.getSize();
+    const size = this.map.getSize();
+    if (typeof size === "undefined") {
+      throw new Error("Map size not set");
+    }
+    return size;
   }
 
   getView() {
@@ -166,31 +175,23 @@ export default class OpenLayersMap {
 
   /* Center */
 
-  getCenter(native = true) {
-    let center = this.view.getCenter();
-    if (!native) {
-      center = transform(center);
+  getCenter() {
+    const center = this.view.getCenter();
+    if (typeof center === "undefined") {
+      throw new Error("Map center is not set");
     }
     return center;
   }
 
-  setCenter(center: Center, zoom?: ZoomLevel, native = true, duration = ANIMATION_DURATION) {
-    if (!native) {
-      center = transform(center, true);
-    }
-
-    const doZoom = typeof zoom !== "undefined";
-
+  setCenterAndZoom(center: Center, zoom: ZoomLevel, duration = ANIMATION_DURATION) {
     return new Promise((resolve, reject) => {
       if (duration && duration > 0) {
-        const options = { center, duration, zoom: doZoom ? zoom : undefined };
+        const options = { center, duration, zoom };
         const callback = (completed) => (completed ? resolve(this) : reject(this));
         this.view.animate(options, callback);
       } else {
         this.view.setCenter(center);
-        if (doZoom) {
-          this.view.setZoom(zoom);
-        }
+        this.view.setZoom(zoom);
         resolve(this);
       }
     });
@@ -230,12 +231,18 @@ export default class OpenLayersMap {
     const source = new XYZSource({
       url: `https://api.mapbox.com/styles/v1/${name}/tiles/256/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
     });
-    return new TileLayer({ label, shortLabel, source, visible });
+    const layer = new TileLayer({ source, visible });
+    layer.set("label", label);
+    layer.set("shortLabel", shortLabel);
+    return layer;
   }
 
   makeOSMLayer(label = "OpenStreetMap", shortLabel = "OSM", visible = false) {
     const source = new OSMSource();
-    return new TileLayer({ label, shortLabel, source, visible });
+    const layer = new TileLayer({ source, visible });
+    layer.set("label", label);
+    layer.set("shortLabel", shortLabel);
+    return layer;
   }
 
   makeDebugLayer(label, shortLabel, visible = false) {
@@ -245,7 +252,10 @@ export default class OpenLayersMap {
       tileGrid: osmSource.getTileGrid(),
     });
     shortLabel = shortLabel || label;
-    return new TileLayer({ label, shortLabel, source, visible });
+    const layer = new TileLayer({ source, visible });
+    layer.set("label", label);
+    layer.set("shortLabel", shortLabel);
+    return layer;
   }
 
   makeFeatureLayer(label, path, options: any = {}) {
@@ -289,7 +299,11 @@ export default class OpenLayersMap {
   }
 
   getFeatureLayer(label) {
-    return this.featureLayers.find((layer) => layer.get("label") === label);
+    const layer = this.featureLayers.find((layer) => layer.get("label") === label);
+    if (!layer) {
+      throw new Error(`Unknown feature layer: ${label}`);
+    }
+    return layer;
   }
 
   setSelectedStops(stopIDs) {
@@ -318,7 +332,11 @@ export default class OpenLayersMap {
   /* Zoom */
 
   getZoom() {
-    return this.view.getZoom();
+    const zoomLevel = this.view.getZoom();
+    if (typeof zoomLevel === "undefined") {
+      throw new Error("Map zoom level is not set");
+    }
+    return zoomLevel;
   }
 
   /* Geolocation */
@@ -334,7 +352,6 @@ export default class OpenLayersMap {
           timeout: 30 * 1000,
         },
       });
-      geolocator.listenerKeys = [];
       this._geolocator = geolocator;
     }
     return this._geolocator;
@@ -342,14 +359,14 @@ export default class OpenLayersMap {
 
   addGeolocatorListener(type, listener, once = false) {
     const key = once ? this.geolocator.once(type, listener) : this.geolocator.on(type, listener);
-    this.geolocator.listenerKeys.push(key);
+    this.listenerKeys.push(key);
     return key;
   }
 
   showUserLocation(userLocation) {
     const layer = this.userLocationLayer;
     const source = layer.getSource();
-    const { position, accuracy, accuracyCoords } = userLocation;
+    const { position } = userLocation;
     source.clear();
     if (position) {
       const feature = new Feature({

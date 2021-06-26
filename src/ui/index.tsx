@@ -16,15 +16,11 @@ import "./index.scss";
 axios.defaults.headers.common["Accept"] = "application/json";
 axios.defaults.validateStatus = (status) => status >= 200 && status < 400;
 
-const main = () => {
-  ReactDOM.render(
-    <React.StrictMode>
-      <Provider store={store}>
-        <App />
-      </Provider>
-    </React.StrictMode>,
-    document.getElementById("root")
-  );
-};
-
-export default main;
+ReactDOM.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>,
+  document.getElementById("root")
+);
