@@ -39,7 +39,7 @@ server {
     }
 
     location /api/static {
-        alias {{ remote_backend_dir }}/static;
+        alias {{ remote_current_backend }}/static;
     }
 
     location /api {
@@ -48,7 +48,7 @@ server {
     }
 
     location / {
-        root {{ remote_frontend_dir }};
+        root {{ remote_current_frontend }};
         try_files $uri /index.html =404;
     }
 }

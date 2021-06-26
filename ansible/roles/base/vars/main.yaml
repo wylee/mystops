@@ -19,6 +19,9 @@ django_static_root: "{{ root }}/static"
 # Remote ---------------------------------------------------------------
 
 remote_site_root: "/sites/{{ hostname }}"
+remote_current_root: "{{ remote_site_root }}/current"
+remote_current_backend: "{{ remote_current_root }}/backend"
+remote_current_frontend: "{{ remote_current_root }}/frontend"
 
 remote_pip_root: "{{ remote_site_root }}/pip"
 remote_pip_cache_dir: "{{ remote_pip_root }}/cache"

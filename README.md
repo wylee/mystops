@@ -51,7 +51,7 @@ one from the API registration page.
 * Linux (Ubuntu 20.04)
 * PostgreSQL 12
 * PostGIS 3
-* Python 3.9
+* Python 3.8
 * Django 3.2
 * TypeScript
 * React with Redux
