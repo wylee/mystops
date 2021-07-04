@@ -54,5 +54,5 @@ one from the API registration page.
 * Python 3.8
 * Django 3.2
 * TypeScript
-* React with Redux
+* VueJS
 * OpenLayers

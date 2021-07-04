@@ -1,10 +1,10 @@
 /.env.dev
-/.env.new
 /.env.prod
 /.env*.local
 /ansible/**/*.retry
 /build/
 /data/trimet/
+/dist/
 /node_modules/
 /package-lock.json
 /poetry.lock

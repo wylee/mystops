@@ -1,3 +1,4 @@
+import Feature from "ol/Feature";
 import Style from "ol/style/Style";
 import Circle from "ol/style/Circle";
 import Fill from "ol/style/Fill";
@@ -6,9 +7,9 @@ import Stroke from "ol/style/Stroke";
 
 /* Base */
 
-const STOP_STYLE_CACHE = {};
+const STOP_STYLE_CACHE: { [key: string]: Style } = {};
 
-export const STOP_STYLE = (feature, resolution) => {
+export const STOP_STYLE = (feature: Feature, resolution: number): Style => {
   const key = resolution.toString();
   if (typeof STOP_STYLE_CACHE[key] === "undefined") {
     let radius;
@@ -76,5 +77,15 @@ export const USER_LOCATION_STYLE = new Style({
       color: "white",
       width: 2,
     }),
+  }),
+});
+
+export const USER_LOCATION_ACCURACY_STYLE = new Style({
+  fill: new Fill({
+    color: "rgba(255, 10, 32, 0.15)",
+  }),
+  stroke: new Stroke({
+    color: "rgba(255, 10, 32, 0.75)",
+    width: 1,
   }),
 });
