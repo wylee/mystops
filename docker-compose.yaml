@@ -10,7 +10,7 @@ volumes:
 
 services:
   postgres:
-    image: postgis/postgis:12-2.5
+    image: postgis/postgis:12-3.0
     environment:
       - POSTGRES_USER=mystops
       - POSTGRES_PASSWORD=mystops
