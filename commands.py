@@ -55,6 +55,34 @@ def lint(show_errors=True, where="./", raise_on_error=True):
 
 
 @command
+def db(data_dir="/opt/homebrew/var/postgres"):
+    c.local(("postgres", "-D", data_dir))
+
+
+@command
+def db_setup():
+    args = {
+        "raise_on_error": False,
+        "stderr": "capture",
+        "environ": {"PGPASSWORD": "mystops"},
+    }
+    commands = [
+        "createuser --login mystops",
+        "createdb --owner mystops mystops",
+        "psql -c 'create extension postgis' mystops",
+    ]
+    for cmd in commands:
+        result = c.local(cmd, **args)
+        if "exists" in result.stderr:
+            printer.print("[red]Exists[/red]:", cmd)
+        else:
+            abort(1, result.stdout)
+
+
+# Docker ---------------------------------------------------------------
+
+
+@command
 def docker():
     """Run `docker compose up`."""
     network_name = "mystops"
