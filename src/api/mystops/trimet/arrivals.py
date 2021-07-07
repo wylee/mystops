@@ -198,7 +198,6 @@ def get_status_for_result(result):
     if status == "estimated":
         timestamp = trimet_timestamp_to_datetime(estimated)
         delta = timestamp - now()
-        print(timestamp, now(), delta)
         # XXX: If the estimated arrival time is more than hour away,
         #      fall through and show the scheduled time instead.
         if delta.seconds < 3600:
