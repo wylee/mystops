@@ -62,6 +62,8 @@ def get_arrivals(
     arrivals will be sorted by time.
 
     """
+    current_now = now()
+
     params = {
         "locIDs": ",".join(str(id) for id in stop_ids),
     }
@@ -131,12 +133,27 @@ def get_arrivals(
             route = {"id": route_id, "name": sign_text, "arrivals": []}
             stop["routes"].append(route)
 
+        if estimated:
+            delta = estimated - current_now
+            delta_seconds = delta.seconds
+            if delta_seconds <= 60:
+                designation = "red"
+            elif delta_seconds <= 180:
+                designation = "orange"
+            elif delta_seconds <= 300:
+                designation = "yellow"
+            else:
+                designation = None
+        else:
+            designation = None
+
         route["arrivals"].append(
             {
                 "estimated": estimated,
                 "scheduled": scheduled,
                 "status": status,
                 "distanceAway": distance_away,
+                "designation": designation,
             }
         )
 

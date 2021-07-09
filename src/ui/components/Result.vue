@@ -12,7 +12,10 @@
 
             <ul id="arrivals">
               <li
-                class="arrival"
+                :class="[
+                  'arrival',
+                  `designation-${arrival.designation || 'none'}`,
+                ]"
                 v-for="(arrival, i) in route.arrivals"
                 :key="i"
               >
@@ -135,6 +138,22 @@ ul {
             padding: $quarter-standard-spacing 0;
             > div {
               flex: 50%;
+            }
+            &.designation-red,
+            &.designation-orange,
+            &.designation-yellow {
+              padding-left: 2px;
+              padding-right: 2px;
+              border-radius: 2px;
+            }
+            &.designation-red {
+              background-color: rgb(252, 192, 192);
+            }
+            &.designation-orange {
+              background-color: rgb(253, 192, 124);
+            }
+            &.designation-yellow {
+              background-color: rgb(252, 252, 124);
             }
           }
         }
