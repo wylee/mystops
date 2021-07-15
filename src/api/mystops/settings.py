@@ -25,6 +25,7 @@ MAPBOX = {
 
 TRIMET = {
     "api_key": EnvSetting("TRIMET_API_KEY"),
+    "data_dir": LocalSetting(default="./data/trimet"),
 }
 
 inject_settings()

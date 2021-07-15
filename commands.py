@@ -199,12 +199,13 @@ def ui():
 
 
 @command
-def get_stops(out_dir="./data/trimet", overwrite=False):
+def get_stops(out_dir=None, overwrite=False):
     """Get all stops from TriMet API and save to disk."""
     from mystops.trimet import api
 
     settings = django_settings()
     api_key = settings.TRIMET.api_key
+    out_dir = out_dir or settings.TRIMET.data_dir
     api.get_stops(api_key, out_dir, overwrite)
 
 
