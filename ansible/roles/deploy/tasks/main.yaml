@@ -230,7 +230,7 @@
   cron:
     name: MAILTO
     env: true
-    job: mystops@wyattbaldwin.com
+    job: contact@mystops.io
 
 - name: Add cron SHELL environment variable
   tags:
