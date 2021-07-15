@@ -207,31 +207,36 @@ export default defineComponent({
 
       map.addGeolocatorListener("change", () => map.showUserLocation());
 
-      map.addGeolocatorListener("error", (error) => {
-        let explanation;
-        let detail;
+      map.addGeolocatorListener(
+        "error",
+        (error) => {
+          let explanation;
+          let detail;
 
-        switch (error.code) {
-          case 1:
-            explanation =
-              "Access to location services have been disabled for this site.";
-            detail = "Check your browser location settings and try again.";
-            break;
-          case 3:
-            explanation = "Could not find your location after 30 seconds.";
-            break;
-          default:
-            explanation = "Could not determine your location.";
-        }
+          switch (error.code) {
+            case 1:
+              explanation =
+                "Access to location services have been disabled for this site.";
+              detail = "Check your browser location settings and try again.";
+              break;
+            case 3:
+              explanation = "Could not find your location after 30 seconds.";
+              break;
+            default:
+              explanation = "Could not determine your location.";
+          }
 
-        store.commit("setError", {
-          title: "Location Error",
-          explanation,
-          detail,
-        });
-      });
+          store.commit("setError", {
+            title: "Location Error",
+            explanation,
+            detail,
+          });
+        },
+        /*once */ true
+      );
 
       map.setTarget("map", "overview-map");
+      map.startTracking();
     });
 
     onUnmounted(() => {

@@ -152,9 +152,9 @@ export default class Map {
 
     this.geolocator = new Geolocation({
       projection: this.view.getProjection(),
-      tracking: true,
+      tracking: false,
       trackingOptions: {
-        maximumAge: 2 * 1000,
+        maximumAge: 10 * 1000,
         enableHighAccuracy: true,
         timeout: 30 * 1000,
       },
@@ -341,6 +341,10 @@ export default class Map {
       throw new Error();
     }
     return layer;
+  }
+
+  startTracking(): void {
+    this.geolocator.setTracking(true);
   }
 
   addGeolocatorListener(
