@@ -3,8 +3,8 @@
     <form @submit.prevent="() => search()">
       <input
         type="text"
-        title="Enter a stop ID or name"
-        placeholder="Enter a stop ID or name"
+        title="Enter a stop ID"
+        placeholder="Enter a stop ID"
         autofocus
         v-model="term"
       />
