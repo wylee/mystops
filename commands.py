@@ -1,6 +1,7 @@
 import getpass
 import os
 import shutil
+from pathlib import Path
 
 import dotenv
 
@@ -210,29 +211,35 @@ def get_stops(out_dir=None, overwrite=False):
 
 
 @command
-def load_stops(path="./data/trimet/stops.json", clear=True):
+def load_stops(data_dir=None, path="stops.json", clear=True):
     """Load stops from disk into database."""
-    django_settings()
     from mystops.loaders.stops import load
 
+    settings = django_settings()
+    data_dir = data_dir or settings.TRIMET.data_dir
+    path = Path(data_dir) / path
     load(path, clear)
 
 
 @command
-def load_routes(path="./data/trimet/routes.json", clear=True):
+def load_routes(data_dir=None, path="routes.json", clear=True):
     """Load routes from disk into database."""
-    django_settings()
     from mystops.loaders.routes import load
 
+    settings = django_settings()
+    data_dir = data_dir or settings.TRIMET.data_dir
+    path = Path(data_dir) / path
     load(path, clear)
 
 
 @command
-def load_stop_routes(path="./data/trimet/stops.json", clear=True):
+def load_stop_routes(data_dir=None, path="stops.json", clear=True):
     """Load stop routes from disk into database."""
-    django_settings()
     from mystops.loaders.stop_routes import load
 
+    settings = django_settings()
+    data_dir = data_dir or settings.TRIMET.data_dir
+    path = Path(data_dir) / path
     load(path, clear)
 
 
