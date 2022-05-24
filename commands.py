@@ -57,15 +57,21 @@ def lint(show_errors=True, where="./", raise_on_error=True):
 
 @command
 def db(data_dir="/opt/homebrew/var/postgres"):
+    """Run postgres locally."""
     c.local(("postgres", "-D", data_dir))
 
 
 @command
 def db_setup():
+    """Set up local mystops database."""
     args = {
         "raise_on_error": False,
         "stderr": "capture",
-        "environ": {"PGPASSWORD": "mystops"},
+        "environ": {
+            "PGHOST": "localhost",
+            "PGUSER": "mystops",
+            "PGPASSWORD": "mystops",
+        },
     }
     commands = [
         "createuser --login mystops",
@@ -74,10 +80,11 @@ def db_setup():
     ]
     for cmd in commands:
         result = c.local(cmd, **args)
-        if "exists" in result.stderr:
-            printer.print("[red]Exists[/red]:", cmd)
-        else:
-            abort(1, result.stdout)
+        if result.failed:
+            if "exists" in result.stderr:
+                printer.print("[red]exists[/red]:", cmd)
+            else:
+                abort(1, result.stderr)
 
 
 # Docker ---------------------------------------------------------------
@@ -85,7 +92,12 @@ def db_setup():
 
 @command
 def docker():
-    """Run `docker compose up`."""
+    """Run `docker compose up`.
+
+    This will create the mystops network and database volume first if
+    necessary.
+
+    """
     network_name = "mystops"
     result = c.local(
         f"docker network inspect {network_name}",
@@ -202,9 +214,10 @@ def ui():
 @command
 def get_stops(out_dir=None, overwrite=False):
     """Get all stops from TriMet API and save to disk."""
+    settings = django_settings()
+
     from mystops.trimet import api
 
-    settings = django_settings()
     api_key = settings.TRIMET.api_key
     out_dir = out_dir or settings.TRIMET.data_dir
     api.get_stops(api_key, out_dir, overwrite)
@@ -213,9 +226,10 @@ def get_stops(out_dir=None, overwrite=False):
 @command
 def load_stops(data_dir=None, path="stops.json", clear=True):
     """Load stops from disk into database."""
+    settings = django_settings()
+
     from mystops.loaders.stops import load
 
-    settings = django_settings()
     data_dir = data_dir or settings.TRIMET.data_dir
     path = Path(data_dir) / path
     load(path, clear)
@@ -224,9 +238,10 @@ def load_stops(data_dir=None, path="stops.json", clear=True):
 @command
 def load_routes(data_dir=None, path="routes.json", clear=True):
     """Load routes from disk into database."""
+    settings = django_settings()
+
     from mystops.loaders.routes import load
 
-    settings = django_settings()
     data_dir = data_dir or settings.TRIMET.data_dir
     path = Path(data_dir) / path
     load(path, clear)
@@ -235,9 +250,10 @@ def load_routes(data_dir=None, path="routes.json", clear=True):
 @command
 def load_stop_routes(data_dir=None, path="stops.json", clear=True):
     """Load stop routes from disk into database."""
+    settings = django_settings()
+
     from mystops.loaders.stop_routes import load
 
-    settings = django_settings()
     data_dir = data_dir or settings.TRIMET.data_dir
     path = Path(data_dir) / path
     load(path, clear)
