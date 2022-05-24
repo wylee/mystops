@@ -6,17 +6,14 @@ import View from "ol/View";
 import BaseLayer from "ol/layer/Base";
 import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
-import VectorTileLayer from "ol/layer/VectorTile";
 
 import OSMSource from "ol/source/OSM";
 import TileDebugSource from "ol/source/TileDebug";
 import TileSource from "ol/source/Tile";
 import VectorSource from "ol/source/Vector";
-import VectorTileSource from "ol/source/VectorTile";
 import XYZSource from "ol/source/XYZ";
 
 import GeoJSONFormat from "ol/format/GeoJSON";
-import MVTFormat from "ol/format/MVT";
 
 import Collection from "ol/Collection";
 import { Coordinate } from "ol/coordinate";
@@ -477,32 +474,6 @@ function makeGeoJSONLayer(
   options.minZoom = options.minZoom || FEATURE_LAYER_MIN_ZOOM;
   options.projection = options.projection || GEOGRAPHIC_PROJECTION;
   const layer = new VectorLayer({ source, ...options });
-  layer.set("label", label);
-  return layer;
-}
-
-// XXX:
-// eslint-disable-next-line
-function makeMVTLayer(
-  label: string,
-  path: string,
-  options: any = {}
-): VectorTileLayer {
-  const url = `${API_URL}/${path}/{z}/{x}/{y}`;
-  const source = new VectorTileSource({
-    url,
-    format: new MVTFormat({
-      idProperty: "feature_id",
-    }),
-  });
-  options.minZoom = options.minZoom || FEATURE_LAYER_MIN_ZOOM;
-  options.projection = options.projection || NATIVE_PROJECTION;
-  const layer = new VectorTileLayer({
-    source,
-    renderOrder: null,
-    renderBuffer: 20,
-    ...options,
-  });
   layer.set("label", label);
   return layer;
 }
