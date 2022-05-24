@@ -17,22 +17,21 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Django = "^3.2.8"
-django-local-settings = "^2.0a8"
+Django = "^4.0.4"
+django-local-settings = "^2.0a9"
 #django-local-settings = { path = "../django-local-settings", develop = true }
 mercantile = "^1.2.1"
-psycopg2 = "^2.9.1"
-pymemcache = "^3.5.0"
-pytz = "^2021.3"
-requests = "^2.26.0"
+psycopg2 = "^2.9.3"
+pymemcache = "^3.5.2"
+requests = "^2.27.1"
 runcommands = "*"
-tzlocal = "^2.1"
+tzlocal = "^4.2"
 
 [tool.poetry.dev-dependencies]
 ansible = "*"
 black = "*"
 flake8 = "*"
-django-cors-headers = "^3.10.0"
+django-cors-headers = "^3.12.0"
 
 [tool.runcommands.globals]
 env = "dev"

@@ -1,15 +1,14 @@
 import re
 import sys
+import zoneinfo
 from datetime import datetime
-
-import pytz
 
 from . import exc
 from .request import make_request
 
 
 FEET_TO_METERS = 0.3048
-LOCAL_TZ = pytz.timezone("America/Los_Angeles")
+LOCAL_TZ = zoneinfo.ZoneInfo("America/Los_Angeles")
 
 
 def get_arrivals(
