@@ -212,6 +212,16 @@ def ui():
 
 
 @command
+def load(get_stops_=True):
+    """Get stops from TriMet API and load them into the database."""
+    if get_stops_:
+        get_stops()
+    load_stops()
+    load_routes()
+    load_stop_routes()
+
+
+@command
 def get_stops(out_dir=None, overwrite=False):
     """Get all stops from TriMet API and save to disk."""
     settings = django_settings()
