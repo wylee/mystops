@@ -7,19 +7,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import { useStore } from "./store";
-
-export default defineComponent({
-  setup() {
-    const store = useStore();
-    return {
-      onClick: () => store.commit("closeMapContextMenu"),
-      onContextMenu: () => store.commit("closeMapContextMenu"),
-    };
-  },
-});
+const store = useStore();
+const onClick = () => store.commit("closeMapContextMenu");
+const onContextMenu = () => store.commit("closeMapContextMenu");
 </script>
 
 <style scoped lang="scss">

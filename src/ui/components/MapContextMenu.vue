@@ -9,52 +9,46 @@
   </ul>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed } from "vue";
+<script setup lang="ts">
+import { computed, defineProps } from "vue";
 import { STREET_LEVEL_ZOOM } from "../const";
 import { useStore } from "../store";
-import Map from "./map";
+import MapService from "./MapService";
 
-export default defineComponent({
-  name: "MapContextMenu",
-
-  props: {
-    map: {
-      type: Map,
-      required: true,
-    },
-  },
-
-  setup(props) {
-    const store = useStore();
-    const open = computed(() => store.state.mapContextMenu.open);
-    const style = computed(() => {
-      return getStyle(props.map, store.state.mapContextMenu);
-    });
-
-    function getCoordinate() {
-      const { x, y } = store.state.mapContextMenu;
-      return props.map.getCoordinateFromPixel([x, y]);
-    }
-
-    function setCenter() {
-      props.map.setCenter(getCoordinate());
-    }
-
-    function setCenterAndZoom() {
-      const center = getCoordinate();
-      if (props.map.getZoom() > STREET_LEVEL_ZOOM) {
-        props.map.setCenter(center);
-      } else {
-        props.map.setCenterAndZoom(center, STREET_LEVEL_ZOOM);
-      }
-    }
-
-    return { open, style, setCenter, setCenterAndZoom };
+const props = defineProps({
+  map: {
+    type: MapService,
+    required: true,
   },
 });
 
-function getStyle(map: Map, state: { open: boolean; x: number; y: number }) {
+const store = useStore();
+
+const open = computed(() => store.state.mapContextMenu.open);
+const style = computed(() => getStyle(props.map, store.state.mapContextMenu));
+
+function getCoordinate() {
+  const { x, y } = store.state.mapContextMenu;
+  return props.map.getCoordinateFromPixel([x, y]);
+}
+
+function setCenter() {
+  props.map.setCenter(getCoordinate());
+}
+
+function setCenterAndZoom() {
+  const center = getCoordinate();
+  if (props.map.getZoom() > STREET_LEVEL_ZOOM) {
+    props.map.setCenter(center);
+  } else {
+    props.map.setCenterAndZoom(center, STREET_LEVEL_ZOOM);
+  }
+}
+
+function getStyle(
+  map: MapService,
+  state: { open: boolean; x: number; y: number }
+) {
   if (!state.open) {
     return {
       display: "none",

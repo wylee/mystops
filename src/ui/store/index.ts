@@ -162,7 +162,7 @@ export const store = createStore<State>({
 
       try {
         stops = termToStopIDs(term);
-      } catch (e) {
+      } catch (e: any) {
         commit("setSearchState", {
           term,
           stops: [],
@@ -231,21 +231,16 @@ function termToStopIDs(term: string): number[] {
   return stops;
 }
 
-class InvalidStopIDError {
+class InvalidStopIDError extends Error {
   name = "Bad Stop ID";
   stopIDs: string[];
-  message: string;
-  detail = "TriMet stop IDs are numbers like 4, 17, etc";
 
   constructor(stopIDs: string[]) {
     const ess = stopIDs.length === 1 ? "" : "s";
     const verb = stopIDs.length === 1 ? "is" : "are";
     const string = stopIDs.join(", ");
+    const message = `The following stop ID${ess} ${verb} not valid: ${string}`;
+    super(message);
     this.stopIDs = stopIDs;
-    this.message = `The following stop ID${ess} ${verb} not valid: ${string}`;
-  }
-
-  toString() {
-    return this.message;
   }
 }

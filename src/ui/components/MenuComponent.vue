@@ -86,31 +86,25 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed } from "vue";
+<script setup lang="ts">
+import { computed } from "vue";
 import { BASE_LAYER_LABELS } from "../const";
 import { useStore } from "../store";
 
-export default defineComponent({
-  name: "Menu",
-  setup() {
-    const store = useStore();
-    return {
-      menuOpen: computed(() => store.state.menuOpen),
-      buttonTitle: computed(() =>
-        store.state.menuOpen ? "Close menu" : "Open menu"
-      ),
-      layers: BASE_LAYER_LABELS,
-      baseLayer: computed(() => store.state.baseLayer),
-      setBaseLayer: (baseLayer: number) => {
-        store.commit("setBaseLayer", { baseLayer });
-        store.commit("closeMenu");
-      },
-      closeMenu: () => store.commit("closeMenu"),
-      toggleMenu: () => store.commit("toggleMenu"),
-    };
-  },
-});
+const store = useStore();
+
+const menuOpen = computed(() => store.state.menuOpen);
+const buttonTitle = computed(() =>
+  store.state.menuOpen ? "Close menu" : "Open menu"
+);
+const layers = BASE_LAYER_LABELS;
+const baseLayer = computed(() => store.state.baseLayer);
+const setBaseLayer = (baseLayer: number) => {
+  store.commit("setBaseLayer", { baseLayer });
+  store.commit("closeMenu");
+};
+const closeMenu = () => store.commit("closeMenu");
+const toggleMenu = () => store.commit("toggleMenu");
 </script>
 
 <style scoped lang="scss">

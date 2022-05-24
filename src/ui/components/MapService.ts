@@ -10,6 +10,7 @@ import VectorTileLayer from "ol/layer/VectorTile";
 
 import OSMSource from "ol/source/OSM";
 import TileDebugSource from "ol/source/TileDebug";
+import TileSource from "ol/source/Tile";
 import VectorSource from "ol/source/Vector";
 import VectorTileSource from "ol/source/VectorTile";
 import XYZSource from "ol/source/XYZ";
@@ -20,11 +21,12 @@ import MVTFormat from "ol/format/MVT";
 import Collection from "ol/Collection";
 import { Coordinate } from "ol/coordinate";
 import { EventsKey } from "ol/events";
+import BaseEvent from "ol/events/Event";
 import { boundingExtent, containsExtent, Extent } from "ol/extent";
 import Feature from "ol/Feature";
 import Geolocation from "ol/Geolocation";
-import Geometry from "ol/geom/Geometry";
 import Point from "ol/geom/Point";
+import Polygon from "ol/geom/Polygon";
 import { bbox as bboxLoadingStrategy } from "ol/loadingstrategy";
 import { unByKey } from "ol/Observable";
 import { transformExtent } from "ol/proj";
@@ -51,7 +53,7 @@ import {
 } from "./map-styles";
 
 type OnFeatureCallback = (
-  map: Map,
+  map: MapService,
   feature: Feature,
   pixel: number[],
   layer: BaseLayer,
@@ -63,18 +65,18 @@ type NoFeatureCallback = (event: Event) => any;
 export interface UserLocation {
   position: Coordinate | undefined;
   accuracy: number | undefined;
-  accuracyGeom: Geometry;
+  accuracyGeom: Polygon | null;
   heading: number | undefined;
 }
 
-export default class Map {
+export default class MapService {
   private readonly map: OLMap;
   private readonly view: View;
   private readonly layers: BaseLayer[];
-  private readonly baseLayers: TileLayer[];
+  private readonly baseLayers: TileLayer<TileSource>[];
   private baseLayer = 0;
-  private readonly stopsLayer: VectorLayer;
-  private readonly userLocationLayer: VectorLayer;
+  private readonly stopsLayer: VectorLayer<VectorSource>;
+  private readonly userLocationLayer: VectorLayer<VectorSource>;
   private listenerKeys: EventsKey[] = [];
   private readonly overviewMap: OLMap;
   private readonly overviewMapBaseLayers: BaseLayer[];
@@ -132,7 +134,7 @@ export default class Map {
 
     this.overviewMapBaseLayers = this.baseLayers.map((layer, i) => {
       return new TileLayer({
-        source: layer.getSource(),
+        source: layer.getSource() as TileSource,
         visible: i === this.baseLayer + 1,
       });
     });
@@ -167,14 +169,14 @@ export default class Map {
     });
   }
 
-  on(type: string, listener: (event: Event) => any): EventsKey {
-    const key = this.map.on(type, listener) as EventsKey;
+  on(type: string, listener: (event: BaseEvent) => unknown) {
+    const key = this.map.on(type as any, listener);
     this.listenerKeys.push(key);
     return key;
   }
 
-  once(type: string, listener: (event: Event) => any): EventsKey {
-    const key = this.map.once(type, listener) as EventsKey;
+  once(type: string, listener: (event: BaseEvent) => unknown) {
+    const key = this.map.once(type as any, listener);
     this.listenerKeys.push(key);
     return key;
   }
@@ -354,8 +356,8 @@ export default class Map {
   ): EventsKey {
     const key = (
       once
-        ? this.geolocator.once(type, listener)
-        : this.geolocator.on(type, listener)
+        ? this.geolocator.once(type as any, listener)
+        : this.geolocator.on(type as any, listener)
     ) as EventsKey;
     this.listenerKeys.push(key);
     return key;
@@ -379,7 +381,7 @@ export default class Map {
     const userLocation = this.getUserLocation();
     const { position, accuracy, accuracyGeom } = userLocation;
     const layer = this.userLocationLayer;
-    const source = layer.getSource();
+    const source = layer.getSource() as VectorSource;
     source.clear();
     if (position) {
       const feature = new Feature({
@@ -418,7 +420,7 @@ function makeMapboxLayer(
   label: string,
   shortLabel?: string,
   visible = false
-): TileLayer {
+): TileLayer<XYZSource> {
   const accessToken = process.env.VUE_APP_MAPBOX_ACCESS_TOKEN;
   const source = new XYZSource({
     url: `https://api.mapbox.com/styles/v1/${name}/tiles/256/{z}/{x}/{y}?access_token=${accessToken}`,
@@ -434,7 +436,7 @@ function makeOSMLayer(
   label = "OpenStreetMap",
   shortLabel = "OSM",
   visible = false
-): TileLayer {
+): TileLayer<OSMSource> {
   const source = new OSMSource();
   const layer = new TileLayer({ source, visible });
   layer.set("label", label);
@@ -442,11 +444,11 @@ function makeOSMLayer(
   return layer;
 }
 
-function makeDebugLayer(visible = true): TileLayer {
+function makeDebugLayer(visible = true): TileLayer<TileDebugSource> {
   const osmSource = new OSMSource();
   const source = new TileDebugSource({
     projection: osmSource.getProjection(),
-    tileGrid: osmSource.getTileGrid(),
+    tileGrid: osmSource.getTileGrid() ?? undefined,
   });
   const layer = new TileLayer({ source, visible });
   layer.set("label", "Debug");
@@ -458,7 +460,7 @@ function makeGeoJSONLayer(
   label: string,
   path: string,
   options: any = {}
-): VectorLayer {
+): VectorLayer<VectorSource> {
   const url = `${API_URL}/${path}`;
   const source = new VectorSource({
     strategy: bboxLoadingStrategy,

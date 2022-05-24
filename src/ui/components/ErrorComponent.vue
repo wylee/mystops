@@ -14,18 +14,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed } from "vue";
+<script setup lang="ts">
+import { computed } from "vue";
 import { useStore } from "../store";
-
-export default defineComponent({
-  name: "Error",
-  setup() {
-    const store = useStore();
-    const error = computed(() => store.state.error);
-    return { error };
-  },
-});
+const store = useStore();
+const error = computed(() => store.state.error);
 </script>
 
 <style scoped lang="scss">

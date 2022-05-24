@@ -29,39 +29,34 @@
       </button>
     </form>
 
-    <Result />
+    <ResultComponent />
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed, ref } from "vue";
+<script setup lang="ts">
+import { computed, ref } from "vue";
 import { useStore } from "../store";
-import Result from "./Result.vue";
+import ResultComponent from "./ResultComponent.vue";
 
-export default defineComponent({
-  name: "Search",
-  components: { Result },
-  setup() {
-    const store = useStore();
-    const error = computed(() => store.state.error);
-    const internalTerm = ref<string | null>(null);
-    const term = computed({
-      get: () => internalTerm.value ?? store.state.term,
-      set: (value: any) => (value ? (internalTerm.value = value) : reset()),
-    });
-    function search() {
-      const searchTerm = term.value;
-      // XXX: The search action will normalize & re-set the search term.
-      internalTerm.value = null;
-      store.dispatch("search", { term: searchTerm });
-    }
-    function reset() {
-      internalTerm.value = null;
-      store.commit("resetSearchState");
-    }
-    return { term, error, reset, search };
-  },
+const store = useStore();
+const error = computed(() => store.state.error);
+const internalTerm = ref<string | null>(null);
+const term = computed({
+  get: () => internalTerm.value ?? store.state.term,
+  set: (value: any) => (value ? (internalTerm.value = value) : reset()),
 });
+
+function search() {
+  const searchTerm = term.value;
+  // XXX: The search action will normalize & re-set the search term.
+  internalTerm.value = null;
+  store.dispatch("search", { term: searchTerm });
+}
+
+function reset() {
+  internalTerm.value = null;
+  store.commit("resetSearchState");
+}
 </script>
 
 <style scoped lang="scss">

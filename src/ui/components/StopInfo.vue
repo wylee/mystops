@@ -7,10 +7,10 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, ref, Ref } from "vue";
+<script setup lang="ts">
+import { defineProps, onMounted, ref } from "vue";
 import Feature from "ol/Feature";
-import Map from "./map";
+import MapService from "./MapService";
 import { useStore } from "../store";
 
 interface StopInfo {
@@ -28,42 +28,38 @@ interface Position {
   left: string;
 }
 
-interface Setup {
-  stopInfo: Ref<StopInfo | null>;
-}
-
-export default defineComponent({
-  name: "Stop Info",
-  props: {
-    map: {
-      type: Map,
-      required: true,
-    },
-  },
-  setup(props): Setup {
-    const store = useStore();
-    const stopInfo = ref<StopInfo | null>(null);
-    onMounted(() => {
-      props.map.onFeature(
-        "pointermove",
-        (map, feature, px) => {
-          if (!store.state.mapContextMenu.open) {
-            stopInfo.value = getStopInfo(map, feature, px);
-          }
-        },
-        () => (stopInfo.value = null),
-        props.map.getLayer("Stops"),
-        10
-      );
-      props.map.on("contextmenu", () => {
-        stopInfo.value = null;
-      });
-    });
-    return { stopInfo };
+const props = defineProps({
+  map: {
+    type: MapService,
+    required: true,
   },
 });
 
-function getStopInfo(map: Map, feature: Feature, pixel: number[]): StopInfo {
+const store = useStore();
+const stopInfo = ref<StopInfo | null>(null);
+
+onMounted(() => {
+  props.map.onFeature(
+    "pointermove",
+    (map, feature, px) => {
+      if (!store.state.mapContextMenu.open) {
+        stopInfo.value = getStopInfo(map, feature, px);
+      }
+    },
+    () => (stopInfo.value = null),
+    props.map.getLayer("Stops"),
+    10
+  );
+  props.map.on("contextmenu", () => {
+    stopInfo.value = null;
+  });
+});
+
+function getStopInfo(
+  map: MapService,
+  feature: Feature,
+  pixel: number[]
+): StopInfo {
   const [width, height] = map.getSize();
   const [x, y] = [width / 2, height / 2];
   const buffer = 10;

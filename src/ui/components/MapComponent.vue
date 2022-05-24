@@ -75,186 +75,171 @@
       </div>
     </div>
 
-    <map-context-menu :map="map" />
-    <stop-info :map="map" />
+    <MapContextMenu :map="map" />
+    <StopInfo :map="map" />
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, onUnmounted, ref } from "vue";
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref } from "vue";
+
 import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+
 import { STREET_LEVEL_ZOOM, MAPBOX_WORDMARK_IMAGE_DATA } from "../const";
 import { useStore } from "../store";
-import Map from "./map";
+
+import MapService from "./MapService";
 import { STOP_STYLE_SELECTED } from "./map-styles";
 import MapContextMenu from "./MapContextMenu.vue";
 import StopInfo from "./StopInfo.vue";
 
-export default defineComponent({
-  name: "Map",
-  components: { MapContextMenu, StopInfo },
-  setup() {
-    const store = useStore();
-    const map = new Map();
-    const numBaseLayers = map.getBaseLayers().length;
-    const nextBaseLayerLabel = ref(map.getNextBaseLayer().get("shortLabel"));
-    const stopsLayer = map.getLayer("Stops") as VectorLayer;
-    const stopsSource = stopsLayer.getSource();
-    const userLocation = ref(null);
-    const unsubscribers: (() => void)[] = [];
+const store = useStore();
+const map = new MapService();
+const numBaseLayers = map.getBaseLayers().length;
+const nextBaseLayerLabel = ref(map.getNextBaseLayer().get("shortLabel"));
+const stopsLayer = map.getLayer("Stops") as VectorLayer<VectorSource>;
+const stopsSource = stopsLayer.getSource() as VectorSource;
+// const userLocation = ref(null);
+const unsubscribers: (() => void)[] = [];
 
-    unsubscribers.push(
-      store.watch(
-        (state) => state.baseLayer,
-        (baseLayer) => {
-          map.setBaseLayer(baseLayer);
-          nextBaseLayerLabel.value = map.getNextBaseLayer().get("shortLabel");
-        }
-      )
-    );
-
-    unsubscribers.push(
-      store.watch(
-        (state) => state.result,
-        (newResult, oldResult) => {
-          if (oldResult) {
-            oldResult.stops.forEach((stop: any) => {
-              const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
-              if (feature) {
-                feature.setStyle(undefined);
-              }
-            });
-          }
-
-          if (newResult && newResult.stops.length) {
-            const stops = newResult.stops;
-            const newExtent = map.extentOf(stops, true);
-
-            const setStyle = () => {
-              stops.forEach((stop: any) => {
-                const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
-                if (feature) {
-                  feature.setStyle(STOP_STYLE_SELECTED);
-                }
-              });
-            };
-
-            if (
-              !map.containsExtent(newExtent) ||
-              map.getZoom() < STREET_LEVEL_ZOOM
-            ) {
-              map.setExtent(newExtent, () =>
-                map.once("rendercomplete", setStyle)
-              );
-            } else {
-              setStyle();
-            }
-          }
-        }
-      )
-    );
-
-    function nextBaseLayer() {
-      store.commit("nextBaseLayer", { numBaseLayers });
+unsubscribers.push(
+  store.watch(
+    (state) => state.baseLayer,
+    (baseLayer) => {
+      map.setBaseLayer(baseLayer);
+      nextBaseLayerLabel.value = map.getNextBaseLayer().get("shortLabel");
     }
+  )
+);
 
-    function zoomToUserLocation() {
-      const userLocation = map.getUserLocation();
-      if (userLocation.position) {
-        map.showUserLocation(/*zoomTo*/ true);
-      } else {
-        store.commit("setError", {
-          title: "Location Error",
-          explanation: "Could not determine your location.",
-          detail: "Check your browser location settings and try again.",
+unsubscribers.push(
+  store.watch(
+    (state) => state.result,
+    (newResult, oldResult) => {
+      if (oldResult) {
+        oldResult.stops.forEach((stop: any) => {
+          const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
+          if (feature) {
+            feature.setStyle(undefined);
+          }
         });
       }
-    }
 
-    function onClick() {
-      store.commit("closeMapContextMenu");
-    }
+      if (newResult && newResult.stops.length) {
+        const stops = newResult.stops;
+        const newExtent = map.extentOf(stops, true);
 
-    function onContextMenu(event: any) {
-      const x = event.pageX;
-      const y = event.pageY;
-      store.commit("setMapContextMenuState", { open: true, x, y });
-    }
-
-    onMounted(() => {
-      map.onFeature(
-        "click",
-        (map, feature) => {
-          const stopID = feature.get("id");
-          if (store.state.error) {
-            store.commit("resetSearchState");
-          }
-          store.commit("toggleStopID", { stopID });
-          store.dispatch("search", { term: store.state.term });
-        },
-        () => {
-          store.commit("resetSearchState");
-        },
-        stopsLayer
-      );
-
-      // Initial zoom to user location
-      map.addGeolocatorListener(
-        "change",
-        () => map.showUserLocation(/* zoomTo */ true),
-        /* once */ true
-      );
-
-      map.addGeolocatorListener("change", () => map.showUserLocation());
-
-      map.addGeolocatorListener(
-        "error",
-        (error) => {
-          let explanation;
-          let detail;
-
-          switch (error.code) {
-            case 1:
-              explanation =
-                "Access to location services have been disabled for this site.";
-              detail = "Check your browser location settings and try again.";
-              break;
-            case 3:
-              explanation = "Could not find your location after 30 seconds.";
-              break;
-            default:
-              explanation = "Could not determine your location.";
-          }
-
-          store.commit("setError", {
-            title: "Location Error",
-            explanation,
-            detail,
+        const setStyle = () => {
+          stops.forEach((stop: any) => {
+            const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
+            if (feature) {
+              feature.setStyle(STOP_STYLE_SELECTED);
+            }
           });
-        },
-        /*once */ true
-      );
+        };
 
-      map.setTarget("map", "overview-map");
-      map.startTracking();
+        if (
+          !map.containsExtent(newExtent) ||
+          map.getZoom() < STREET_LEVEL_ZOOM
+        ) {
+          map.setExtent(newExtent, () => map.once("rendercomplete", setStyle));
+        } else {
+          setStyle();
+        }
+      }
+    }
+  )
+);
+
+function nextBaseLayer() {
+  store.commit("nextBaseLayer", { numBaseLayers });
+}
+
+function zoomToUserLocation() {
+  const userLocation = map.getUserLocation();
+  if (userLocation.position) {
+    map.showUserLocation(/*zoomTo*/ true);
+  } else {
+    store.commit("setError", {
+      title: "Location Error",
+      explanation: "Could not determine your location.",
+      detail: "Check your browser location settings and try again.",
     });
+  }
+}
 
-    onUnmounted(() => {
-      map.cleanup();
-      unsubscribers.forEach((unsubscribe) => unsubscribe());
-    });
+function onClick() {
+  store.commit("closeMapContextMenu");
+}
 
-    return {
-      map,
-      nextBaseLayerLabel,
-      nextBaseLayer,
-      userLocation,
-      zoomToUserLocation,
-      onClick,
-      onContextMenu,
-      MAPBOX_WORDMARK_IMAGE_DATA,
-    };
-  },
+function onContextMenu(event: any) {
+  const x = event.pageX;
+  const y = event.pageY;
+  store.commit("setMapContextMenuState", { open: true, x, y });
+}
+
+onMounted(() => {
+  map.onFeature(
+    "click",
+    (map, feature) => {
+      const stopID = feature.get("id");
+      if (store.state.error) {
+        store.commit("resetSearchState");
+      }
+      store.commit("toggleStopID", { stopID });
+      store.dispatch("search", { term: store.state.term });
+    },
+    () => {
+      store.commit("resetSearchState");
+    },
+    stopsLayer
+  );
+
+  // Initial zoom to user location
+  map.addGeolocatorListener(
+    "change",
+    () => map.showUserLocation(/* zoomTo */ true),
+    /* once */ true
+  );
+
+  map.addGeolocatorListener("change", () => map.showUserLocation());
+
+  map.addGeolocatorListener(
+    "error",
+    (error) => {
+      let explanation;
+      let detail;
+
+      switch (error.code) {
+        case 1:
+          explanation =
+            "Access to location services have been disabled for this site.";
+          detail = "Check your browser location settings and try again.";
+          break;
+        case 3:
+          explanation = "Could not find your location after 30 seconds.";
+          break;
+        default:
+          explanation = "Could not determine your location.";
+      }
+
+      store.commit("setError", {
+        title: "Location Error",
+        explanation,
+        detail,
+      });
+    },
+    /*once */ true
+  );
+
+  map.setTarget("map", "overview-map");
+  map.startTracking();
+});
+
+onUnmounted(() => {
+  map.cleanup();
+  unsubscribers.forEach((unsubscribe) => unsubscribe());
 });
 </script>
 

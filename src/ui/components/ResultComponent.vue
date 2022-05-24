@@ -32,48 +32,40 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed } from "vue";
+<script setup lang="ts">
+import { computed } from "vue";
 import { useStore } from "../store";
 
-export default defineComponent({
-  name: "Result",
+const store = useStore();
+const result = computed(() => store.state.result);
 
-  setup() {
-    const store = useStore();
-    const result = computed(() => store.state.result);
+function milesAway(arrival: any) {
+  const {
+    distanceAway: { miles, feet },
+  } = arrival;
+  if (!miles) {
+    return "N/A";
+  }
+  if (feet <= 300) {
+    const unit = feet === 1 ? "foot" : "feet";
+    return `${Math.round(feet).toFixed(1)} ${unit} away`;
+  }
+  const ess = miles === 1 ? "" : "s";
+  return `${miles.toFixed(1)} mile${ess} away`;
+}
 
-    function milesAway(arrival: any) {
-      const {
-        distanceAway: { miles, feet },
-      } = arrival;
-      if (!miles) {
-        return "N/A";
-      }
-      if (feet <= 300) {
-        const unit = feet === 1 ? "foot" : "feet";
-        return `${Math.round(feet).toFixed(1)} ${unit} away`;
-      }
-      const ess = miles === 1 ? "" : "s";
-      return `${miles.toFixed(1)} mile${ess} away`;
-    }
-
-    function kilometersAway(arrival: any) {
-      const {
-        distanceAway: { kilometers, meters },
-      } = arrival;
-      if (!kilometers) {
-        return "N/A";
-      }
-      if (meters <= 100) {
-        return `${Math.round(meters).toFixed(0)} m away`;
-      }
-      return `${kilometers.toFixed(1)} km away`;
-    }
-
-    return { result, milesAway, kilometersAway };
-  },
-});
+function kilometersAway(arrival: any) {
+  const {
+    distanceAway: { kilometers, meters },
+  } = arrival;
+  if (!kilometers) {
+    return "N/A";
+  }
+  if (meters <= 100) {
+    return `${Math.round(meters).toFixed(0)} m away`;
+  }
+  return `${kilometers.toFixed(1)} km away`;
+}
 </script>
 
 <style scoped lang="scss">
