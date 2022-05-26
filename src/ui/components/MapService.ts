@@ -386,7 +386,6 @@ export default class MapService {
       });
       feature.setStyle(USER_LOCATION_STYLE);
       source.addFeature(feature);
-      console.log(accuracy, accuracyGeom);
       if (
         accuracy &&
         accuracy > USER_LOCATION_ACCURACY_THRESHOLD &&
