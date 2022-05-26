@@ -1,11 +1,14 @@
 import re
 import sys
-import zoneinfo
 from datetime import datetime
 
 from . import exc
 from .request import make_request
 
+try:
+    import zoneinfo
+except ImportError:
+    import backports.zoneinfo as zoneinfo
 
 FEET_TO_METERS = 0.3048
 LOCAL_TZ = zoneinfo.ZoneInfo("America/Los_Angeles")
