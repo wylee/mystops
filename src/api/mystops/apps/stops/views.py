@@ -124,7 +124,7 @@ def geojson(request, *, statement=GEOJSON_STATEMENT):
         data = row[0]
         if data["features"] is None:
             data["features"] = []
-        return JsonResponse(row[0], safe=False)
+        return JsonResponse(data, safe=False)
 
 
 MVT_STATEMENT = """\
