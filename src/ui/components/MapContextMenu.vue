@@ -10,38 +10,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, inject } from "vue";
 import { STREET_LEVEL_ZOOM } from "../const";
 import { useStore } from "../store";
 import MapService from "./MapService";
 
-const props = defineProps({
-  map: {
-    type: MapService,
-    required: true,
-  },
-});
-
 const store = useStore();
-
+const map: MapService = inject("map") as MapService;
 const open = computed(() => store.state.mapContextMenu.open);
-const style = computed(() => getStyle(props.map, store.state.mapContextMenu));
+const style = computed(() => getStyle(map, store.state.mapContextMenu));
 
 function getCoordinate() {
   const { x, y } = store.state.mapContextMenu;
-  return props.map.getCoordinateFromPixel([x, y]);
+  return map.getCoordinateFromPixel([x, y]);
 }
 
 function setCenter() {
-  props.map.setCenter(getCoordinate());
+  map.setCenter(getCoordinate());
 }
 
 function setCenterAndZoom() {
   const center = getCoordinate();
-  if (props.map.getZoom() > STREET_LEVEL_ZOOM) {
-    props.map.setCenter(center);
+  if (map.getZoom() > STREET_LEVEL_ZOOM) {
+    map.setCenter(center);
   } else {
-    props.map.setCenterAndZoom(center, STREET_LEVEL_ZOOM);
+    map.setCenterAndZoom(center, STREET_LEVEL_ZOOM);
   }
 }
 

@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { inject, onMounted, ref } from "vue";
 import Feature from "ol/Feature";
 import MapService from "./MapService";
 import { useStore } from "../store";
@@ -28,18 +28,12 @@ interface Position {
   left: string;
 }
 
-const props = defineProps({
-  map: {
-    type: MapService,
-    required: true,
-  },
-});
-
 const store = useStore();
 const stopInfo = ref<StopInfo | null>(null);
+const map: MapService = inject("map") as MapService;
 
 onMounted(() => {
-  props.map.onFeature(
+  map.onFeature(
     "pointermove",
     (map, feature, px) => {
       if (!store.state.mapContextMenu.open) {
@@ -47,10 +41,10 @@ onMounted(() => {
       }
     },
     () => (stopInfo.value = null),
-    props.map.getLayer("Stops"),
+    map.getLayer("Stops"),
     10
   );
-  props.map.on("contextmenu", () => {
+  map.on("contextmenu", () => {
     stopInfo.value = null;
   });
 });

@@ -75,13 +75,13 @@
       </div>
     </div>
 
-    <MapContextMenu :map="map" />
-    <StopInfo :map="map" />
+    <MapContextMenu />
+    <StopInfo />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
+import { inject, onMounted, onUnmounted, ref } from "vue";
 
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
@@ -95,7 +95,7 @@ import MapContextMenu from "./MapContextMenu.vue";
 import StopInfo from "./StopInfo.vue";
 
 const store = useStore();
-const map = new MapService();
+const map: MapService = inject("map") as MapService;
 const numBaseLayers = map.getBaseLayers().length;
 const nextBaseLayerLabel = ref(map.getNextBaseLayer().get("shortLabel"));
 const stopsLayer = map.getLayer("Stops") as VectorLayer<VectorSource>;
@@ -232,13 +232,9 @@ onMounted(() => {
     },
     /*once */ true
   );
-
-  map.setTarget("map", "overview-map");
-  map.startTracking();
 });
 
 onUnmounted(() => {
-  map.cleanup();
   unsubscribers.forEach((unsubscribe) => unsubscribe());
 });
 </script>
