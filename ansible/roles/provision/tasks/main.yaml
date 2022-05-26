@@ -127,7 +127,9 @@
     PGPASSWORD: "{{ database_password }}"
   command: /usr/bin/createuser --login {{ database_user }}
   register: command_result
-  failed_when: "'exists' not in command_result.stderr"
+  failed_when:
+    - command_result.rc != 0
+    - "'exists' not in command_result.stderr"
 
 - name: Create application database
   tags:
@@ -137,7 +139,9 @@
   become_user: postgres
   command: /usr/bin/createdb --owner {{ database_user }} {{ database_name }} "MyStops database"
   register: command_result
-  failed_when: "'exists' not in command_result.stderr"
+  failed_when:
+    - command_result.rc != 0
+    - "'exists' not in command_result.stderr"
 
 - name: Enable postgis extension in application database
   tags:
@@ -147,7 +151,9 @@
   become_user: postgres
   command: /usr/bin/psql -c "create extension postgis" {{ database_name }}
   register: command_result
-  failed_when: "'exists' not in command_result.stderr"
+  failed_when:
+    - command_result.rc != 0
+    - "'exists' not in command_result.stderr"
 
 # Nginx
 
