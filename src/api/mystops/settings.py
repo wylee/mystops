@@ -1,5 +1,3 @@
-from django.core.management import utils
-
 from local_settings import inject_settings, EnvSetting, LocalSetting, SecretSetting
 
 ALLOWED_HOSTS = LocalSetting(default=list)
