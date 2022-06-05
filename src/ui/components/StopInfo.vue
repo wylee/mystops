@@ -36,7 +36,7 @@ onMounted(() => {
   map.onFeature(
     "pointermove",
     (map, feature, px) => {
-      if (!store.state.mapContextMenu.open) {
+      if (!store.mapContextMenu.open) {
         stopInfo.value = getStopInfo(map, feature, px);
       }
     },

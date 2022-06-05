@@ -39,10 +39,10 @@ import { useStore } from "../store";
 import ResultComponent from "./ResultComponent.vue";
 
 const store = useStore();
-const error = computed(() => store.state.error);
+const error = computed(() => store.error);
 const internalTerm = ref<string | null>(null);
 const term = computed({
-  get: () => internalTerm.value ?? store.state.term,
+  get: () => internalTerm.value ?? store.term,
   set: (value: any) => (value ? (internalTerm.value = value) : reset()),
 });
 
@@ -50,12 +50,12 @@ function search() {
   const searchTerm = term.value;
   // XXX: The search action will normalize & re-set the search term.
   internalTerm.value = null;
-  store.dispatch("search", { term: searchTerm });
+  store.search({ term: searchTerm });
 }
 
 function reset() {
   internalTerm.value = null;
-  store.commit("resetSearchState");
+  store.resetSearchState();
 }
 </script>
 

@@ -17,11 +17,11 @@ import MapService from "./MapService";
 
 const store = useStore();
 const map: MapService = inject("map") as MapService;
-const open = computed(() => store.state.mapContextMenu.open);
-const style = computed(() => getStyle(map, store.state.mapContextMenu));
+const open = computed(() => store.mapContextMenu.open);
+const style = computed(() => getStyle(map, store.mapContextMenu));
 
 function getCoordinate() {
-  const { x, y } = store.state.mapContextMenu;
+  const { x, y } = store.mapContextMenu;
   return map.getCoordinateFromPixel([x, y]);
 }
 

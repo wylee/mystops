@@ -37,7 +37,7 @@ import { computed } from "vue";
 import { useStore } from "../store";
 
 const store = useStore();
-const result = computed(() => store.state.result);
+const result = computed(() => store.result);
 
 function milesAway(arrival: any) {
   const {

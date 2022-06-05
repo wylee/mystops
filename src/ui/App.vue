@@ -10,8 +10,8 @@
 <script setup lang="ts">
 import { useStore } from "./store";
 const store = useStore();
-const onClick = () => store.commit("closeMapContextMenu");
-const onContextMenu = () => store.commit("closeMapContextMenu");
+const onClick = () => store.closeMapContextMenu();
+const onContextMenu = () => store.closeMapContextMenu();
 </script>
 
 <style scoped lang="scss">

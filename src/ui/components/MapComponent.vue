@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, ref } from "vue";
+import { inject, onMounted, ref, watch } from "vue";
 
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
@@ -100,60 +100,51 @@ const numBaseLayers = map.getBaseLayers().length;
 const nextBaseLayerLabel = ref(map.getNextBaseLayer().get("shortLabel"));
 const stopsLayer = map.getLayer("Stops") as VectorLayer<VectorSource>;
 const stopsSource = stopsLayer.getSource() as VectorSource;
-// const userLocation = ref(null);
-const unsubscribers: (() => void)[] = [];
 
-unsubscribers.push(
-  store.watch(
-    (state) => state.baseLayer,
-    (baseLayer) => {
-      map.setBaseLayer(baseLayer);
-      nextBaseLayerLabel.value = map.getNextBaseLayer().get("shortLabel");
-    }
-  )
+watch(
+  () => store.baseLayer,
+  (newBaseLayer) => {
+    map.setBaseLayer(newBaseLayer);
+    nextBaseLayerLabel.value = map.getNextBaseLayer().get("shortLabel");
+  }
 );
 
-unsubscribers.push(
-  store.watch(
-    (state) => state.result,
-    (newResult, oldResult) => {
-      if (oldResult) {
-        oldResult.stops.forEach((stop: any) => {
+watch(
+  () => store.result,
+  (newResult, oldResult) => {
+    if (oldResult) {
+      oldResult.stops.forEach((stop: any) => {
+        const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
+        if (feature) {
+          feature.setStyle(undefined);
+        }
+      });
+    }
+
+    if (newResult && newResult.stops.length) {
+      const stops = newResult.stops;
+      const newExtent = map.extentOf(stops, true);
+
+      const setStyle = () => {
+        stops.forEach((stop: any) => {
           const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
           if (feature) {
-            feature.setStyle(undefined);
+            feature.setStyle(STOP_STYLE_SELECTED);
           }
         });
-      }
+      };
 
-      if (newResult && newResult.stops.length) {
-        const stops = newResult.stops;
-        const newExtent = map.extentOf(stops, true);
-
-        const setStyle = () => {
-          stops.forEach((stop: any) => {
-            const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
-            if (feature) {
-              feature.setStyle(STOP_STYLE_SELECTED);
-            }
-          });
-        };
-
-        if (
-          !map.containsExtent(newExtent) ||
-          map.getZoom() < STREET_LEVEL_ZOOM
-        ) {
-          map.setExtent(newExtent, () => map.once("rendercomplete", setStyle));
-        } else {
-          setStyle();
-        }
+      if (!map.containsExtent(newExtent) || map.getZoom() < STREET_LEVEL_ZOOM) {
+        map.setExtent(newExtent, () => map.once("rendercomplete", setStyle));
+      } else {
+        setStyle();
       }
     }
-  )
+  }
 );
 
 function nextBaseLayer() {
-  store.commit("nextBaseLayer", { numBaseLayers });
+  store.nextBaseLayer({ numBaseLayers });
 }
 
 function zoomToUserLocation() {
@@ -161,7 +152,7 @@ function zoomToUserLocation() {
   if (userLocation.position) {
     map.showUserLocation(/*zoomTo*/ true);
   } else {
-    store.commit("setError", {
+    store.setError({
       title: "Location Error",
       explanation: "Could not determine your location.",
       detail: "Check your browser location settings and try again.",
@@ -170,13 +161,13 @@ function zoomToUserLocation() {
 }
 
 function onClick() {
-  store.commit("closeMapContextMenu");
+  store.closeMapContextMenu();
 }
 
 function onContextMenu(event: any) {
   const x = event.pageX;
   const y = event.pageY;
-  store.commit("setMapContextMenuState", { open: true, x, y });
+  store.setMapContextMenuState({ open: true, x, y });
 }
 
 onMounted(() => {
@@ -184,14 +175,14 @@ onMounted(() => {
     "click",
     (map, feature) => {
       const stopID = feature.get("id");
-      if (store.state.error) {
-        store.commit("resetSearchState");
+      if (store.error) {
+        store.resetSearchState();
       }
-      store.commit("toggleStopID", { stopID });
-      store.dispatch("search", { term: store.state.term });
+      store.toggleStopID({ stopID });
+      store.search({ term: store.term });
     },
     () => {
-      store.commit("resetSearchState");
+      store.resetSearchState();
     },
     stopsLayer
   );
@@ -224,7 +215,7 @@ onMounted(() => {
           explanation = "Could not determine your location.";
       }
 
-      store.commit("setError", {
+      store.setError({
         title: "Location Error",
         explanation,
         detail,
@@ -232,10 +223,6 @@ onMounted(() => {
     },
     /*once */ true
   );
-});
-
-onUnmounted(() => {
-  unsubscribers.forEach((unsubscribe) => unsubscribe());
 });
 </script>
 

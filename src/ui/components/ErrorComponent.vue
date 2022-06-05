@@ -18,7 +18,7 @@
 import { computed } from "vue";
 import { useStore } from "../store";
 const store = useStore();
-const error = computed(() => store.state.error);
+const error = computed(() => store.error);
 </script>
 
 <style scoped lang="scss">

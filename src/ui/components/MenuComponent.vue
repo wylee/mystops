@@ -93,18 +93,18 @@ import { useStore } from "../store";
 
 const store = useStore();
 
-const menuOpen = computed(() => store.state.menuOpen);
+const menuOpen = computed(() => store.menuOpen);
 const buttonTitle = computed(() =>
-  store.state.menuOpen ? "Close menu" : "Open menu"
+  store.menuOpen ? "Close menu" : "Open menu"
 );
 const layers = BASE_LAYER_LABELS;
-const baseLayer = computed(() => store.state.baseLayer);
+const baseLayer = computed(() => store.baseLayer);
 const setBaseLayer = (baseLayer: number) => {
-  store.commit("setBaseLayer", { baseLayer });
-  store.commit("closeMenu");
+  store.setBaseLayer({ baseLayer });
+  store.closeMenu();
 };
-const closeMenu = () => store.commit("closeMenu");
-const toggleMenu = () => store.commit("toggleMenu");
+const closeMenu = () => store.closeMenu();
+const toggleMenu = () => store.toggleMenu();
 </script>
 
 <style scoped lang="scss">

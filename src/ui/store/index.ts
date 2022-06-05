@@ -1,5 +1,4 @@
-import { InjectionKey } from "vue";
-import { createStore, useStore as baseUseStore, Store } from "vuex";
+import { defineStore } from "pinia";
 
 import axios, { CancelTokenSource } from "axios";
 
@@ -23,31 +22,22 @@ export interface State {
   menuOpen: boolean;
   term: string;
   stops: number[];
-  result: Result | null;
-  error: Error | null;
-  cancelTokenSource: CancelTokenSource | undefined;
-  timeoutID: number | undefined;
+  result?: Result;
+  error?: Error;
+  cancelTokenSource?: CancelTokenSource;
+  timeoutID?: number;
   baseLayer: number;
   mapContextMenu: MapContextMenuState;
 }
 
-export const key: InjectionKey<Store<State>> = Symbol();
-
-// XXX: Use this rather than importing useStore from vuex in order to
-//      get typing support;
-export function useStore(): Store<State> {
-  return baseUseStore(key);
-}
-
-export const store = createStore<State>({
-  strict: process.env.NODE_ENV !== "production",
-  state() {
+export const useStore = defineStore("main", {
+  state: (): State => {
     return {
       menuOpen: false,
       term: "",
       stops: [],
-      result: null,
-      error: null,
+      result: undefined,
+      error: undefined,
       cancelTokenSource: undefined,
       timeoutID: undefined,
       baseLayer: 0,
@@ -58,23 +48,62 @@ export const store = createStore<State>({
       },
     };
   },
-  mutations: {
-    openMenu(state) {
-      state.menuOpen = true;
+
+  actions: {
+    // Error handling
+    setError(payload: Error) {
+      this.error = payload;
     },
-    closeMenu(state) {
-      state.menuOpen = false;
+
+    // Main menu
+    openMenu() {
+      this.menuOpen = true;
     },
-    toggleMenu(state) {
-      state.menuOpen = !state.menuOpen;
+    closeMenu() {
+      this.menuOpen = false;
     },
-    setSearchTerm(state, payload: { term: string }) {
-      state.term = payload.term;
+    toggleMenu() {
+      this.menuOpen = !this.menuOpen;
     },
-    toggleStopID(state, payload: { stopID: number }) {
+
+    // Map context menu
+    closeMapContextMenu() {
+      this.mapContextMenu = { open: false, x: 0, y: 0 };
+    },
+    setMapContextMenuState(payload: MapContextMenuState) {
+      this.mapContextMenu = payload;
+    },
+
+    // Map layers
+    setBaseLayer(payload: { baseLayer: number }) {
+      this.baseLayer = payload.baseLayer;
+    },
+    nextBaseLayer(payload: { numBaseLayers: number }) {
+      this.baseLayer = (this.baseLayer + 1) % payload.numBaseLayers;
+    },
+
+    // Search
+    setSearchTerm(payload: { term: string }) {
+      this.term = payload.term;
+    },
+    setStops(payload: { stops: number[] }) {
+      this.stops = payload.stops;
+    },
+    setResult(payload: { result: Result }) {
+      this.result = payload.result;
+    },
+    setCancelTokenSource(payload?: { source: CancelTokenSource }) {
+      this.cancelTokenSource?.cancel();
+      this.cancelTokenSource = payload?.source;
+    },
+    setTimeoutID(payload?: { timeoutID: number }) {
+      clearTimeout(this.timeoutID);
+      this.timeoutID = payload?.timeoutID;
+    },
+    toggleStopID(payload: { stopID: number }) {
       // Add stop ID to search term if it's not already present;
       // remove it if it is.
-      const stopIDs = termToStopIDs(state.term);
+      const stopIDs = termToStopIDs(this.term);
       const newID = termToStopIDs(payload.stopID.toString())[0];
       const index = stopIDs.indexOf(newID);
       if (index === -1) {
@@ -83,78 +112,40 @@ export const store = createStore<State>({
         stopIDs.splice(index, 1);
       }
       stopIDs.sort((a, b) => a - b);
-      state.term = stopIDs.join(", ");
+      this.term = stopIDs.join(", ");
     },
-    setStops(state, payload: { stops: number[] }) {
-      state.stops = payload.stops;
+    setSearchState(payload: {
+      term: string;
+      stops?: number[];
+      result?: Result;
+      error?: Error;
+      cancelTokenSource?: CancelTokenSource;
+      timeoutID?: undefined;
+    }) {
+      this.$patch({
+        ...payload,
+        stops: payload.stops ?? termToStopIDs(payload.term),
+      });
     },
-    setResult(state, payload: { result: Result }) {
-      state.result = payload.result;
+    resetSearchState() {
+      this.cancelTokenSource?.cancel();
+      clearTimeout(this.timeoutID);
+      this.$patch({
+        term: "",
+        stops: [],
+        result: undefined,
+        error: undefined,
+        cancelTokenSource: undefined,
+        timeoutID: undefined,
+      });
     },
-    setSearchState(
-      state,
-      payload: {
-        term: string;
-        stops?: number[];
-        result?: Result;
-        error?: Error;
-        cancelTokenSource?: undefined;
-        timeoutID?: undefined;
-      }
-    ) {
-      state.term = payload.term;
-      state.stops = payload.stops ?? termToStopIDs(payload.term);
-      state.result = payload.result ?? null;
-      state.error = payload.error ?? null;
-      state.cancelTokenSource = payload.cancelTokenSource;
-      state.timeoutID = payload.timeoutID;
-    },
-    resetSearchState(state) {
-      if (state.cancelTokenSource) {
-        state.cancelTokenSource.cancel();
-      }
-      clearTimeout(state.timeoutID);
-      state.term = "";
-      state.stops = [];
-      state.result = null;
-      state.error = null;
-      state.cancelTokenSource = undefined;
-      state.timeoutID = undefined;
-    },
-    setError(state, payload: Error) {
-      state.error = payload;
-    },
-    setCancelTokenSource(state, payload?: { source: CancelTokenSource }) {
-      if (state.cancelTokenSource) {
-        state.cancelTokenSource.cancel();
-      }
-      state.cancelTokenSource = payload?.source;
-    },
-    setTimeoutID(state, payload?: { timeoutID: number }) {
-      clearTimeout(state.timeoutID);
-      state.timeoutID = payload?.timeoutID;
-    },
-    setBaseLayer(state, payload: { baseLayer: number }) {
-      state.baseLayer = payload.baseLayer;
-    },
-    nextBaseLayer(state, payload: { numBaseLayers: number }) {
-      state.baseLayer = (state.baseLayer + 1) % payload.numBaseLayers;
-    },
-    setMapContextMenuState(state, payload: MapContextMenuState) {
-      state.mapContextMenu = payload;
-    },
-    closeMapContextMenu(state) {
-      state.mapContextMenu = { open: false, x: 0, y: 0 };
-    },
-  },
-  actions: {
-    search({ commit, dispatch }, payload: { term: string }) {
+    search(payload: { term: string }) {
       let { term } = payload;
 
-      commit("resetSearchState");
+      this.resetSearchState();
 
       if (!term.trim()) {
-        commit("setSearchTerm", { term });
+        this.setSearchTerm({ term });
         return;
       }
 
@@ -163,7 +154,7 @@ export const store = createStore<State>({
       try {
         stops = termToStopIDs(term);
       } catch (e: any) {
-        commit("setSearchState", {
+        this.setSearchState({
           term,
           stops: [],
           error: {
@@ -178,7 +169,7 @@ export const store = createStore<State>({
       const cancelTokenSource = axios.CancelToken.source();
 
       term = stops.join(", ");
-      commit("setSearchState", { term, stops, cancelTokenSource });
+      this.setSearchState({ term, stops, cancelTokenSource });
 
       return axios
         .get(ARRIVALS_URL, {
@@ -188,10 +179,10 @@ export const store = createStore<State>({
         .then((response) => {
           const result = response.data;
           if (result.count) {
-            commit("setResult", { result: result });
-            commit("setTimeoutID", {
+            this.setResult({ result: result });
+            this.setTimeoutID({
               timeoutID: setTimeout(
-                () => dispatch("search", { term }),
+                () => this.search({ term }),
                 REFRESH_INTERVAL
               ),
             });
@@ -205,7 +196,6 @@ export const store = createStore<State>({
         });
     },
   },
-  modules: {},
 });
 
 function termToStopIDs(term: string): number[] {
