@@ -17,7 +17,7 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Django = "^4.0.4"
+Django = "^4.0.5"
 django-local-settings = "^2.0a9"
 #django-local-settings = { path = "../django-local-settings", develop = true }
 mercantile = "^1.2.1"
@@ -31,7 +31,7 @@ tzlocal = "^4.2"
 ansible = "*"
 black = "*"
 flake8 = "*"
-django-cors-headers = "^3.12.0"
+django-cors-headers = "^3.13.0"
 
 [tool.runcommands.globals]
 env = "dev"
