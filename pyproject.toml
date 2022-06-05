@@ -31,6 +31,7 @@ tzlocal = "^4.2"
 ansible = "*"
 black = "*"
 flake8 = "*"
+isort = "*"
 django-cors-headers = "^3.13.0"
 
 [tool.runcommands.globals]

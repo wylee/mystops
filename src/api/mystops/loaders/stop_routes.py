@@ -2,8 +2,8 @@ import json
 import sys
 from pathlib import Path
 
-from ..apps.stops.models import Stop, StopRoute
 from ..apps.routes.models import Route
+from ..apps.stops.models import Stop, StopRoute
 
 
 def load(path, clear, batch_size=100):

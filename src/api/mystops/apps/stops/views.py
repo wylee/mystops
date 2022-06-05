@@ -1,13 +1,11 @@
+import mercantile
 from django.conf import settings
 from django.db import connection
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
 
-import mercantile
-
 from .models import Stop
-
 
 CACHE_TIME = 30 if settings.DEBUG else (6 * 60 * 60)
 

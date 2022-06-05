@@ -1,10 +1,5 @@
 from django.conf import settings
-from django.http import (
-    HttpResponse,
-    HttpResponseNotFound,
-    HttpResponseBadRequest,
-    JsonResponse,
-)
+from django.http import JsonResponse
 
 from mystops.apps.stops.models import Stop
 from mystops.trimet import api

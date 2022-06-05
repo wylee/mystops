@@ -2,7 +2,6 @@ import requests
 
 from .exc import TriMetAPIError
 
-
 BASE_URL = "http://developer.trimet.org/ws/v{version}/{service}"
 
 

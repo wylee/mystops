@@ -4,26 +4,28 @@ import shutil
 from pathlib import Path
 
 import dotenv
-
-from tzlocal import get_localzone
-
-from runcommands import abort, command, printer
+from runcommands import abort, command
 from runcommands import commands as c
+from runcommands import printer
+from tzlocal import get_localzone
 
 
 @command
 def format_code(check=False, where="./"):
     """Format code with black."""
     if check:
-        printer.header("Checking code formatting code with black")
-        check_arg = "--check"
+        printer.header("Checking code formatting")
+        check_opt = "--check"
         raise_on_error = True
     else:
-        printer.header("Formatting code with black")
-        check_arg = None
+        printer.header("Formatting code")
+        check_opt = None
         raise_on_error = False
-    result = c.local(("black", check_arg, where), raise_on_error=raise_on_error)
-    return result
+    black_result = c.local(("black", check_opt, where), raise_on_error=raise_on_error)
+    isort_result = c.local(
+        ("isort", "--profile", "black", check_opt, where), raise_on_error=raise_on_error
+    )
+    return black_result.return_code | isort_result.return_code
 
 
 @command
@@ -139,6 +141,7 @@ def run_django_command(argv):
 def django_settings():
     """Get Django settings."""
     import os
+
     import django
     from django.conf import settings
 

@@ -1,4 +1,4 @@
-from local_settings import inject_settings, EnvSetting, LocalSetting, SecretSetting
+from local_settings import EnvSetting, LocalSetting, SecretSetting, inject_settings
 
 ALLOWED_HOSTS = LocalSetting(default=list)
 
