@@ -189,10 +189,25 @@ export const useStore = defineStore("main", {
           }
         })
         .catch((error) => {
-          console.error(error);
           if (axios.isCancel(error)) {
             return;
           }
+          const data = error.response?.data;
+          let title = "Error";
+          let explanation = "An error occurred.";
+          let detail = data ? undefined : "Please try again later.";
+          if (data) {
+            if (data.title) {
+              title = data.title;
+            }
+            if (data.explanation) {
+              explanation = data.explanation;
+            }
+            if (data.detail) {
+              detail = data.detail;
+            }
+          }
+          this.setError({ title, explanation, detail });
         });
     },
   },
