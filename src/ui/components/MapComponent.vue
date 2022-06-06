@@ -203,15 +203,22 @@ onMounted(() => {
       let detail;
 
       switch (error.code) {
-        case 1:
+        case 1: // GeolocationPositionError.PERMISSION_DENIED
           explanation =
             "Access to location services have been disabled for this site.";
           detail = "Check your browser location settings and try again.";
           break;
-        case 3:
+        case 3: // GeolocationPositionError.TIMEOUT
+          // NOTE: If a position has been set, then presumably there's
+          //       not actually a timeout error. I think this only
+          //       happens on desktop because there's no sensor and
+          //       therefore tracking isn't possible.
+          if (map.getUserLocation().position) {
+            return;
+          }
           explanation = "Could not find your location after 30 seconds.";
           break;
-        default:
+        default: // GeolocationPositionError.POSITION_UNAVAILABLE (or other)
           explanation = "Could not determine your location.";
       }
 
