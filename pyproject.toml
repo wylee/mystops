@@ -17,7 +17,7 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Django = "^4.0.6"
+Django = "^4.0.7"
 django-local-settings = "^2.0a9"
 #django-local-settings = { path = "../django-local-settings", develop = true }
 mercantile = "^1.2.1"
