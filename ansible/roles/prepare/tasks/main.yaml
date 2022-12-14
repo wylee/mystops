@@ -1,130 +1,172 @@
 ---
-# Back end
+# App
 
-- name: Remove local back end build root
+- name: <LOCAL> Remove app build directory & archive
   tags:
-    - prepare-backend
-    - prepare-backend-clean
-    - deploy-backend
+    - prepare-app
+    - prepare-app-clean
+    - deploy-app
   file:
-    path: "{{ backend_build_root }}"
+    path: "{{ item }}"
     state: absent
+  with_items:
+    - "{{ app_build_dir }}"
+    - "{{ app_build_archive }}"
 
-- name: Create local back end build directory for version
+- name: <LOCAL> Create app build directory for version
   tags:
-    - prepare-backend
-    - deploy-backend
+    - prepare-app
+    - deploy-app
   file:
-    path: "{{ backend_build_dir }}"
+    path: "{{ app_build_dir }}"
     state: directory
 
-- name: Copy local settings file to build directory
+- name: <LOCAL> Copy public settings file to build directory
   tags:
-    - prepare-backend
+    - prepare-app
     - prepare-copy-files
-    - deploy-backend
-  copy:
-    src: "{{ root }}/.env.{{ env }}"
-    dest: "{{ backend_build_dir }}/.env"
-
-- name: Copy .env file to build directory
-  tags:
-    - prepare-backend
-    - prepare-copy-files
-    - deploy-backend
+    - deploy-app
   template:
-    src: "local.cfg.j2"
-    dest: "{{ backend_build_dir }}/local.cfg"
+    src: "{{ package_info.public_settings_file }}"
+    dest: "{{ app_build_dir }}"
 
-- name: Copy RunCommands console script wrapper to build directory
+- name: <LOCAL> Copy env-specific settings file to build directory
   tags:
-    - prepare-backend
+    - prepare-app
     - prepare-copy-files
-    - deploy-backend
+    - deploy-app
   template:
-    src: "run.j2"
-    dest: "{{ backend_build_dir }}/run"
-    mode: 0750
+    src: "{{ package_info.settings_file }}"
+    dest: "{{ app_build_dir }}"
 
-- name: Copy RunCommands module to build directory
+- name: <LOCAL> Copy WSGI module to build directory
   tags:
-    - prepare-backend
+    - prepare-app
     - prepare-copy-files
-    - deploy-backend
-  copy:
-    src: "{{ root }}/commands.py"
-    dest: "{{ backend_build_dir }}"
-
-- name: Copy RunCommands config to build directory
-  tags:
-    - prepare-backend
-    - prepare-copy-files
-    - deploy-backend
-  copy:
-    src: "{{ root }}/pyproject.toml"
-    dest: "{{ backend_build_dir }}"
-
-- name: Copy WSGI module to build directory
-  tags:
-    - prepare-backend
-    - prepare-copy-files
-    - deploy-backend
+    - deploy-app
   template:
     src: "wsgi.py.j2"
-    dest: "{{ backend_build_dir }}/wsgi.py"
+    dest: "{{ app_build_dir }}/wsgi.py"
 
-- name: Build source distribution
+- name: <LOCAL> Copy DjangoKit wrapper script to build directory
   tags:
-    - prepare-backend
-    - deploy-backend
-    - build-distribution
+    - prepare-app
+    - prepare-copy-files
+    - deploy-app
+  template:
+    src: "dk.j2"
+    dest: "{{ app_build_dir }}/dk"
+
+- name: <LOCAL> Copy RunCommands wrapper script to build directory
+  tags:
+    - prepare-app
+    - prepare-copy-files
+    - deploy-app
+  template:
+    src: "run.j2"
+    dest: "{{ app_build_dir }}/run"
+
+- name: <LOCAL> Copy RunCommands module to build directory
+  tags:
+    - prepare-app
+    - prepare-copy-files
+    - deploy-app
+  copy:
+    src: "{{ root }}/commands.py"
+    dest: "{{ app_build_dir }}/commands.py"
+
+- name: <LOCAL> Copy RunCommands config file to build directory
+  tags:
+    - prepare-app
+    - prepare-copy-files
+    - deploy-app
+  template:
+    src: "runcommands.toml.j2"
+    dest: "{{ app_build_dir }}/runcommands.toml"
+
+- name: <LOCAL> Remove existing source distributions
+  tags:
+    - prepare-app
+    - deploy-app
+    - build-distributions
+  file:
+    path: "{{ item }}/dist"
+    state: absent
+  with_items:
+    - "{{ root }}"
+
+- name: <LOCAL> Build source distributions
+  tags:
+    - prepare-app
+    - deploy-app
+    - build-distributions
   command: poetry build --format wheel
+  args:
+    chdir: "{{ item }}"
+  with_items:
+    - "{{ root }}"
 
-- name: Copy source distribution to build directory
+- name: <LOCAL> Copy source distributions to build directory
   tags:
-    - prepare-backend
-    - deploy-backend
-    - build-distribution
+    - prepare-app
+    - deploy-app
+    - build-distributions
   copy:
     src: "{{ item }}"
-    dest: "{{ backend_build_dir }}/dist/"
+    dest: "{{ app_build_dir }}/dist/"
   with_fileglob:
-    - "{{ backend_build_root }}/mystops*.whl"
+    - "{{ root }}/dist/*"
 
-- name: Collect Django static files
+- name: <LOCAL> Create build archive
   tags:
-    - prepare-backend
-    - deploy-backend
-    - collectstatic
-  command: runcommands django -- collectstatic
-  args:
-    chdir: "{{ backend_build_dir }}"
-  environment:
-    DYLD_LIBRARY_PATH: "/opt/homebrew/lib"
-
-- name: Create build archive
-  tags:
-    - prepare-backend
-    - deploy-backend
-    - create-build-archive
+    - prepare-app
+    - deploy-app
+    - create-app-archive
   archive:
-    path: "{{ backend_build_dir }}"
-    dest: "{{ backend_build_archive }}"
+    path: "{{ app_build_dir }}"
+    dest: "{{ app_build_archive }}"
 
-# Front end
+# Static files, including SSR
 
-- name: Remove local front end build root
+- name: <LOCAL> Remove client & static build directories
   tags:
-    - prepare-frontend
-    - prepare-frontend-clean
-    - deploy-frontend
+    - prepare-static
+    - prepare-static-clean
+    - deploy-static
   file:
-    path: "{{ root }}/build"
+    path: "{{ item }}"
     state: absent
+  with_items:
+    - "{{ package_info.static_build_dir }}"
+    - "{{ static_build_dir }}"
 
-- name: Build front end
+- name: <LOCAL> Build client bundle
   tags:
-    - prepare-frontend
-    - prepare-frontend-build
-    - deploy-frontend
-  command: npm run build
+    - prepare-static
+    - prepare-static-build
+    - deploy-static
+  environment:
+    - DYLD_LIBRARY_PATH: /opt/homebrew/lib
+  command: >
+    poetry run djangokit
+    --env {{ env }}
+    build-client
+    --minify 
+  args:
+    chdir: "{{ root }}"
+    creates: "{{ package_info.static_build_dir }}/client.bundle.js"
+
+- name: <LOCAL> Collect Django static files
+  tags:
+    - prepare-static
+    - prepare-static-build
+    - deploy-static
+  environment:
+    - DYLD_LIBRARY_PATH: /opt/homebrew/lib
+  command: >
+    poetry run djangokit
+    --env {{ env }}
+    collectstatic
+    --static-root {{ static_build_dir }}
+  args:
+    chdir: "{{ root }}"

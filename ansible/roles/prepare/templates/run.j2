@@ -2,5 +2,4 @@
 #
 # Wraps RunCommands console script
 # Sets env global via --env
-
-{{ remote_backend_dir }}/venv/bin/runcommands --env {{ env }} "$@"
+{{ remote_app_dir }}/venv/bin/runcommands --env {{ env }} "$@"

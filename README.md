@@ -38,21 +38,28 @@ one from the API registration page.
 
 ### Installation
 
-`poetry install`
-`npm install`
+```shell
+poetry env use 3.9
+poetry install
+poetry run dk install
+poetry run dk migrate
+poetry run dk start
+```
 
 ### Running
 
-`run dev-server`
-`npm start`
+```shell
+poetry run dk start
+```
 
 ### Stack
 
-* Linux (Ubuntu 20.04)
-* PostgreSQL 12
+* Linux
+* PostgreSQL 13
 * PostGIS 3
-* Python 3.8
-* Django 3.2
+* Python 3.9
+* Django 4.1
 * TypeScript
-* VueJS
+* React
+* React Router
 * OpenLayers

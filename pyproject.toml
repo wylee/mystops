@@ -1,53 +1,56 @@
 [tool.poetry]
 name = "mystops"
-version = "2.0a1"
-description = "TriMet arrivals on a map"
-authors = ["Wyatt Baldwin <self@wyattbaldwin.com>"]
-license = "UNLICENSED"
+version = "3.0.0.dev0"
+description = "MyStops - TriMet arrivals on a map"
+authors = ["Wyatt Baldwin <code@wyattbaldwin.com>"]
+license = "private"
 readme = "README.md"
 
 packages = [
-    { include = "mystops", from = "src/api" }
-]
-
-include = [
-    "commands.py",
-    "src/api/mystops/*.cfg",
+    { include = "mystops", from = "src" }
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-Django = "^4.0.6"
-django-local-settings = "^2.0a9"
-#django-local-settings = { path = "../django-local-settings", develop = true }
+python = "^3.9"
+
+org-djangokit-core = "~0.0.3"
+org-djangokit-cli = "~0.0.6"
+
+django = "^4.1.5"
+markdown = "^3.4.1"
 mercantile = "^1.2.1"
-psycopg2 = "^2.9.3"
-pymemcache = "^3.5.2"
+psycopg2 = "^2.9.5"
+pydantic = "^1.10.4"
+pymemcache = "^4.0.0"
 requests = "^2.28.1"
-runcommands = "*"
+runcommands = "^1.0a71"
 tzlocal = "^4.2"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+org-djangokit-core = { path = "../djangokit/core", develop = true }
+org-djangokit-cli = { path = "../djangokit/cli", develop = true }
+
 ansible = "*"
 black = "*"
-flake8 = "*"
 isort = "*"
-django-cors-headers = "^3.13.0"
+mypy = "*"
+pytest = "*"
+ruff = "*"
+
+[tool.ruff]
+ignore = ["E731"]
+
+[tool.ruff.per-file-ignores]
+"commands.py" = ["F722", "F821"]
+"__init__.py" = ["F401"]
 
 [tool.runcommands.globals]
-env = "dev"
+env = "development"
 
 [tool.runcommands.envs]
-dev = {}
-prod.hostname = "mystops.io"
-
-[tool.runcommands.args]
-ansible.env = "prod"
-provision.env = "prod"
-prepare.env = "prod"
-deploy.env = "prod"
-upgrade_remote.env = "prod"
+development = {}
+production.host = "mystops.io"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

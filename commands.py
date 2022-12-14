@@ -1,60 +1,72 @@
-import getpass
 import os
+import posixpath
+import re
 import shutil
 from pathlib import Path
 
-import dotenv
-from runcommands import abort, command
+import django
+from runcommands import abort, arg, command
 from runcommands import commands as c
 from runcommands import printer
+from runcommands.commands import remote, sync
+from runcommands.util import flatten_args
 from tzlocal import get_localzone
 
+from mystops.trimet import api
 
-@command
-def format_code(check=False, where="./"):
-    """Format code with black."""
-    if check:
-        printer.header("Checking code formatting")
-        check_opt = "--check"
-        raise_on_error = True
-    else:
-        printer.header("Formatting code")
-        check_opt = None
-        raise_on_error = False
-    black_result = c.local(("black", check_opt, where), raise_on_error=raise_on_error)
-    isort_result = c.local(
-        ("isort", "--profile", "black", check_opt, where), raise_on_error=raise_on_error
-    )
-    return black_result.return_code | isort_result.return_code
+TITLE = "MyStops"
+SITE_USER = "mystops"
+SRC_PATH = "src/mystops"
 
 
 @command
-def lint(show_errors=True, where="./", raise_on_error=True):
-    """Check for lint with flake8."""
-    printer.header("Checking for lint with flake8")
-    result = c.local(("flake8", where), stdout="capture", raise_on_error=False)
-    pieces_of_lint = len(result.stdout_lines)
-    if pieces_of_lint:
-        ess = "" if pieces_of_lint == 1 else "s"
-        message = f"{pieces_of_lint} piece{ess} of lint found"
-        if show_errors:
-            message = "\n".join(
-                (
-                    message,
-                    result.stdout.rstrip(),
-                    "NOTE: Many lint errors can be fixed by running `run format-code`",
-                )
-            )
-        if raise_on_error:
-            abort(result.return_code, message)
-        else:
-            printer.error(message)
+def clean(deep=False):
+    """Clean up locally.
+
+    This removes build, dist, and cache directories by default.
+
+    Use the `--deep` flag to remove the virtualenv and node_modules
+    directories, which shouldn't be removed in a normal cleaning.
+
+    """
+    printer.header("Cleaning...")
+
+    rm_dir("build")
+    rm_dir("dist")
+    rm_dir("static")
+    rm_dir(f"{SRC_PATH}/app/build")
+    rm_dir(f"{SRC_PATH}/website/static/build")
+    rm_dir(".mypy_cache")
+    rm_dir(".pytest_cache")
+    rm_dir(".ruff_cache")
+
+    pycache_dirs = tuple(Path.cwd().glob("__pycache__"))
+    if pycache_dirs:
+        count = len(pycache_dirs)
+        noun = "directory" if count == 1 else "directories"
+        printer.info(f"removing {count} __pycache__ {noun}")
+        for d in pycache_dirs:
+            rm_dir(d, True)
+
+    if deep:
+        printer.warning("Deep cleaning...")
+        rm_dir(".venv")
+        rm_dir("node_modules")
+
+
+def rm_dir(name, quiet=False):
+    path = Path(name).absolute()
+    rel_path = path.relative_to(path.cwd())
+    if path.is_dir():
+        if not quiet:
+            printer.warning(f"removing directory tree: {rel_path}")
+        shutil.rmtree(path)
     else:
-        printer.success("No lint found")
-    return result
+        if not quiet:
+            printer.info(f"directory not present: {rel_path}")
 
 
-# Docker ---------------------------------------------------------------
+# Database -------------------------------------------------------------
 
 
 @command
@@ -66,22 +78,13 @@ def db(data_dir="/opt/homebrew/var/postgres"):
 @command
 def db_setup():
     """Set up local mystops database."""
-    args = {
-        "raise_on_error": False,
-        "stderr": "capture",
-        "environ": {
-            "PGHOST": "localhost",
-            "PGUSER": "mystops",
-            "PGPASSWORD": "mystops",
-        },
-    }
     commands = [
         "createuser --login mystops",
         "createdb --owner mystops mystops",
         "psql -c 'create extension postgis' mystops",
     ]
     for cmd in commands:
-        result = c.local(cmd, **args)
+        result = c.local(cmd, stderr="capture", raise_on_error=False)
         if result.failed:
             if "exists" in result.stderr:
                 printer.print("[red]exists[/red]:", cmd)
@@ -127,148 +130,104 @@ def docker():
     c.local("docker compose up")
 
 
-# Django ---------------------------------------------------------------
-
-
-def run_django_command(argv):
-    from django.core.management import execute_from_command_line
-
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mystops.settings")
-    argv = ["./manage.py"] + list(argv)
-    execute_from_command_line(argv)
-
-
-def django_settings():
-    """Get Django settings."""
-    import os
-
-    import django
-    from django.conf import settings
-
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mystops.settings")
-    os.environ.setdefault("LOCAL_SETTINGS_CONFIG_QUIET", "true")
-    django.setup()
-    return settings
+# TriMet Data Import ---------------------------------------------------
 
 
 @command
-def django(*args):
-    """Run a Django management command.
+def load(
+    env,
+    out_dir: arg(
+        short_option="-d",
+        help="Directory to save downloaded & processed data into",
+    ) = None,
+    overwrite: "Overwrite previously downloaded (cached) stop data?" = False,
+    clear: "Clear existing records from database?" = True,
+):
+    """Geta stop data from TriMet API and load into database.
 
-    From the command line, pass additional options after -- like so::
-
-        run django runserver -- --noreload
+    This combines `get_stops`, `load_stops`, `load_routes`, and
+    `load_stop_routes` into a single command for convenience.
 
     """
-    run_django_command(args)
+    get_stops(env, out_dir, overwrite=overwrite)
+    load_stops(env, out_dir, clear=clear)
+    load_routes(env, out_dir, clear=clear)
+    load_stop_routes(env, out_dir, clear=clear)
 
 
 @command
-def dev_server():
-    django("runserver")
+def get_stops(
+    env,
+    out_dir: arg(
+        short_option="-d",
+        help="Directory to save downloaded & processed stop data into",
+    ) = None,
+    overwrite: "Overwrite previously downloaded (cached) stop data?" = False,
+):
+    """Get all stops from TriMet API and save to disk.
 
+    This writes raw stop data from the API to `raw_stops.json`. The raw
+    stop data is then processed into `stops.json` and `routes.json`.
 
-@command
-def make_migrations():
-    django("makemigrations", "stops", "routes")
+    If the raw stop data file is already present, it won't be
+    re-downloaded from the TriMet API unless the `overwrite` flag is
+    used.
 
-
-@command
-def migrate(make=True, start_over=False):
-    from django.contrib.auth import get_user_model
-    from django.db import connection
-
-    django_settings()
-
-    if start_over:
-        with connection.cursor() as cursor:
-            cursor.execute("drop table if exists stop_route")
-            cursor.execute("drop table if exists stop")
-            cursor.execute("drop table if exists route")
-            cursor.execute("delete from django_migrations where app = 'stops'")
-            cursor.execute("delete from django_migrations where app = 'routes'")
-        shutil.rmtree("src/api/mystops/apps/stops/migrations", ignore_errors=True)
-        shutil.rmtree("src/api/mystops/apps/routes/migrations", ignore_errors=True)
-
-    if make:
-        make_migrations()
-
-    django("migrate")
-
-    user_model = get_user_model()
-    username = getpass.getuser()
-    if not user_model.objects.filter(username=username).exists():
-        printer.info("Creating superuser")
-        email = f"{username}@mystops.io"
-        user_model.objects.create_superuser(username, email, "password")
-
-
-# Node -----------------------------------------------------------------
-
-
-@command
-def ui():
-    c.local("npm start")
-
-
-# Import ---------------------------------------------------------------
-
-
-@command
-def load(get_stops_=True):
-    """Get stops from TriMet API and load them into the database."""
-    if get_stops_:
-        get_stops()
-    load_stops()
-    load_routes()
-    load_stop_routes()
-
-
-@command
-def get_stops(out_dir=None, overwrite=False):
-    """Get all stops from TriMet API and save to disk."""
-    settings = django_settings()
-
-    from mystops.trimet import api
-
-    api_key = settings.TRIMET.api_key
-    out_dir = out_dir or settings.TRIMET.data_dir
+    """
+    settings = django_settings(env)
+    api_key = settings.TRIMET_API_KEY
+    out_dir = out_dir or settings.TRIMET_DATA_DIR
     api.get_stops(api_key, out_dir, overwrite)
 
 
 @command
-def load_stops(data_dir=None, path="stops.json", clear=True):
+def load_stops(
+    env,
+    data_dir: "Directory to read data from" = None,
+    file_name: "Data file name relative to data directory" = "stops.json",
+    clear: "Clear existing stops from database?" = True,
+):
     """Load stops from disk into database."""
-    settings = django_settings()
+    settings = django_settings(env)
 
     from mystops.loaders.stops import load
 
-    data_dir = data_dir or settings.TRIMET.data_dir
-    path = Path(data_dir) / path
+    data_dir = data_dir or settings.TRIMET_DATA_DIR
+    path = Path(data_dir) / file_name
     load(path, clear)
 
 
 @command
-def load_routes(data_dir=None, path="routes.json", clear=True):
+def load_routes(
+    env,
+    data_dir: "Directory to read data from" = None,
+    file_name: "Data file name relative to data directory" = "routes.json",
+    clear: "Clear existing routes from database?" = True,
+):
     """Load routes from disk into database."""
-    settings = django_settings()
+    settings = django_settings(env)
 
     from mystops.loaders.routes import load
 
-    data_dir = data_dir or settings.TRIMET.data_dir
-    path = Path(data_dir) / path
+    data_dir = data_dir or settings.TRIMET_DATA_DIR
+    path = Path(data_dir) / file_name
     load(path, clear)
 
 
 @command
-def load_stop_routes(data_dir=None, path="stops.json", clear=True):
+def load_stop_routes(
+    env,
+    data_dir: "Directory to read data from" = None,
+    file_name: "Data file name relative to data directory" = "stops.json",
+    clear: "Clear existing stop routes from database?" = True,
+):
     """Load stop routes from disk into database."""
-    settings = django_settings()
+    settings = django_settings(env)
 
     from mystops.loaders.stop_routes import load
 
-    data_dir = data_dir or settings.TRIMET.data_dir
-    path = Path(data_dir) / path
+    data_dir = data_dir or settings.TRIMET_DATA_DIR
+    path = Path(data_dir) / file_name
     load(path, clear)
 
 
@@ -304,19 +263,10 @@ def export_stops(destination="all-stops.geojson"):
 # Arrivals -------------------------------------------------------------
 
 
-def load_dotenv(env):
-    dotenv_path = f".env.{env}"
-    if not os.path.exists(dotenv_path):
-        abort(404, f".env file not found: {dotenv_path}")
-    dotenv.load_dotenv(dotenv_path)
-
-
 @command
 def get_arrivals(env, *stop_ids, route_ids=()):
-    from mystops.trimet import api
-
-    load_dotenv(env)
-    api_key = os.environ["TRIMET_API_KEY"]
+    settings = django_settings(env)
+    api_key = settings.TRIMET_API_KEY
 
     result = api.get_arrivals(api_key, stop_ids, route_ids)
     if result["count"] == 0:
@@ -355,6 +305,240 @@ def get_arrivals(env, *stop_ids, route_ids=()):
                 printer.hr(color="none")
 
 
+# Provisioning & Deployment --------------------------------------------
+
+
+@command
+def ansible(env, host, version=None, tags=(), skip_tags=(), extra_vars=()):
+    """Run ansible playbook."""
+    version = version or c.git_version()
+
+    if isinstance(tags, str):
+        tags = (tags,)
+
+    if tags:
+        tags = tuple(("--tag", tag) for tag in tags)
+    if skip_tags:
+        skip_tags = tuple(("--skip-tag", tag) for tag in skip_tags)
+    if extra_vars:
+        extra_vars = tuple(("--extra-var", f"{n}={v}") for (n, v) in extra_vars.items())
+
+    args = (
+        "ansible-playbook",
+        "-i",
+        f"ansible/{env}",
+        "ansible/site.yaml",
+        tags,
+        skip_tags,
+        extra_vars,
+        ("--extra-var", f"env={env}"),
+        ("--extra-var", f"hostname={host}"),
+        ("--extra-var", f"version={version}"),
+    )
+
+    cwd = os.path.dirname(__file__)
+    cmd = " ".join(flatten_args(args))
+    cmd = cmd.replace(" -", "\n  -")
+    printer.header(f"Running ansible playbook with CWD = {cwd}")
+    printer.print(cmd, style="bold")
+
+    c.local(args, cd=cwd)
+
+
+@command
+def provision(env, host):
+    """Provision the deployment host."""
+    printer.header(f"Provisioning {host} ({env})")
+    ansible(env, host, tags="provision")
+
+
+@command
+def upgrade_remote(env, host):
+    """Upgrade the deployment host."""
+    printer.header(f"Upgrading {host} ({env})")
+    ansible(env, host, tags="provision-update-packages")
+
+
+def remove_build_dir():
+    printer.warning("Removing build directory...", end="")
+    c.local("rm -rf build")
+    printer.success("Done")
+
+
+@command
+def prepare(
+    env,
+    host,
+    version=None,
+    provision_=False,
+    clean_: arg(help="Remove build directory? [no]") = True,
+):
+    """Prepare build locally for deployment."""
+    version = version or c.git_version()
+    tags = []
+    if provision_:
+        tags.append("provision")
+    tags.append("prepare")
+
+    printer.header(f"Preparing {TITLE} website version {version} for {env}")
+
+    if clean_:
+        printer.print()
+        remove_build_dir()
+
+    printer.print()
+
+    ansible(env, host, tags=tags, extra_vars={"version": version})
+
+
+@command
+def deploy(
+    env: arg(help="Build/deployment environment"),
+    host: arg(help="Host to deploy to"),
+    version: arg(help="Name of version being deployed [short git hash]") = None,
+    provision_: arg(help="Run provisioning steps? [no]") = False,
+    prepare_: arg(
+        short_option="-r",
+        inverse_short_option="-R",
+        help="Run local prep steps? [yes]",
+    ) = True,
+    clean_: arg(help="Remove build directory? [no]") = True,
+    app: arg(help="Deploy app? [yes]") = True,
+    static: arg(help="Deploy static files? [yes]") = True,
+):
+    """Deploy site."""
+    version = version or c.git_version()
+    bool_as_str = lambda b: "yes" if b else "no"
+
+    tags = []
+    skip_tags = []
+    if provision_:
+        tags.append("provision")
+    if prepare_:
+        tags.append("prepare")
+    if not app:
+        skip_tags.append("prepare-app")
+        skip_tags.append("deploy-app")
+    if not static:
+        skip_tags.append("prepare-static")
+        skip_tags.append("deploy-static")
+    tags.append("deploy")
+
+    printer.header(f"Deploying {TITLE} website version {version} to {env}")
+    printer.print(f"env = {env}")
+    printer.print(f"host = {host}")
+    printer.print(f"version = {version}")
+    printer.print(f"provision = {bool_as_str(provision_)}")
+    printer.print(f"local prep = {bool_as_str(prepare_)}")
+    printer.print(f"deploy app = {bool_as_str(app)}")
+    printer.print(f"deploy static = {bool_as_str(static)}")
+
+    if clean_ and prepare_:
+        printer.print()
+        remove_build_dir()
+
+    printer.print()
+
+    ansible(env, host, version, tags=tags, skip_tags=skip_tags)
+
+
+def get_current_path(host):
+    root = f"/sites/{host}"
+    readlink_result = remote(
+        "readlink current",
+        run_as=SITE_USER,
+        cd=root,
+        stdout="capture",
+    )
+    current_path = readlink_result.stdout.strip()
+    if not current_path:
+        abort(404, f"Could not read current link in {root}")
+    return current_path
+
+
+@command
+def clean_remote(host, run_as=SITE_USER, dry_run=False):
+    """Clean up remote.
+
+    Removes old deployments under the site root.
+
+    """
+    root = f"/sites/{host}"
+    printer.header(f"Removing old versions from {root}")
+    current_path = get_current_path(host)
+    current_version = os.path.basename(current_path)
+    printer.success(f"Current version: {current_version}")
+
+    find_result = remote(
+        f"find {root} -mindepth 1 -maxdepth 1 -type d -not -name '.*' -not -name 'pip'",
+        run_as=run_as,
+        stdout="capture",
+    )
+
+    paths = find_result.stdout_lines
+    paths = [p for p in paths if re.fullmatch(r"[0-9a-f]{12}", os.path.basename(p))]
+
+    if not paths:
+        abort(404, f"No versions found in {root}")
+
+    try:
+        paths.remove(current_path)
+    except ValueError:
+        paths = "\n".join(paths)
+        abort(404, f"Current version not found in paths:\n{paths}")
+
+    if not paths:
+        abort(0, "No versions other than current found", color="warning")
+
+    for path in paths:
+        version = os.path.basename(path)
+
+        du_result = remote(
+            f"du -sh {path} | awk '{{ print $1 }}'",
+            run_as=run_as,
+            stdout="capture",
+        )
+        size = du_result.stdout.strip()
+
+        prefix = "[DRY RUN] " if dry_run else ""
+        printer.warning(f"{prefix}Removing version: {version} ({size})... ", end="")
+
+        if not dry_run:
+            remote(f"rm -r {path}", run_as=run_as)
+
+        printer.success("Done")
+
+
+@command
+def push_settings(env, host):
+    """Push settings for env to current deployment and restart uWSGI.
+
+    This provides a simple way to modify production settings without
+    doing a full redeployment.
+
+    """
+    current_path = get_current_path(host)
+    app_dir = posixpath.join(current_path, "app/")
+    printer.header(f"Pushing {env} settings to {host}:{app_dir}")
+    sync(f"settings.{env}.toml", app_dir, host, run_as=SITE_USER)
+    printer.info("Restarting uWSGI (this can take a while)...", end="")
+    remote("systemctl restart uwsgi.service", sudo=True)
+    printer.success("Done")
+
+
+# Utilities ------------------------------------------------------------
+
+
+def django_settings(env):
+    """Get Django settings for env."""
+    from django.conf import settings
+
+    os.environ.setdefault("ENV", env)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangokit.core.settings")
+    django.setup()
+    return settings
+
+
 def format_datetime(value):
     if not value:
         return "???"
@@ -363,82 +547,3 @@ def format_datetime(value):
     day = value.day
     hour = (value.hour % 12) or 12
     return value.strftime(f"{day} %b %Y at {hour}:%M %p")
-
-
-# Provisioning & Deployment --------------------------------------------
-
-
-@command
-def ansible(env, hostname, version=None, tags=(), skip_tags=(), extra_vars=()):
-    version = version or c.git_version()
-    if isinstance(tags, str):
-        tags = (tags,)
-    if tags:
-        tags = tuple(("--tag", tag) for tag in tags)
-    if skip_tags:
-        skip_tags = tuple(("--skip-tag", tag) for tag in skip_tags)
-    if extra_vars:
-        extra_vars = tuple(("--extra-var", f"{n}={v}") for (n, v) in extra_vars.items())
-    c.local(
-        (
-            "ansible-playbook",
-            "-i",
-            f"ansible/{env}",
-            "ansible/site.yaml",
-            tags,
-            skip_tags,
-            extra_vars,
-            ("--extra-var", f"env={env}"),
-            ("--extra-var", f"hostname={hostname}"),
-            ("--extra-var", f"version={version}"),
-        ),
-    )
-
-
-@command
-def provision(env, hostname):
-    ansible(env, hostname, tags="provision")
-
-
-@command
-def upgrade_remote(env, hostname):
-    ansible(env, hostname, tags="provision-update-packages")
-
-
-@command
-def prepare(env, hostname, version=None, provision_=False):
-    version = version or c.git_version()
-    tags = []
-    if provision_:
-        tags.append("provision")
-    tags.append("prepare")
-    printer.hr(f"Preparing MyStops version {version} for deployment")
-    ansible(env, hostname, tags=tags, extra_vars={"version": version})
-
-
-@command
-def deploy(
-    env,
-    hostname,
-    version=None,
-    provision_=False,
-    prepare_=True,
-    backend=True,
-    frontend=True,
-):
-    version = version or c.git_version()
-    tags = []
-    skip_tags = []
-    if provision_:
-        tags.append("provision")
-    if prepare_:
-        tags.append("prepare")
-    if not backend:
-        skip_tags.append("prepare-backend")
-        skip_tags.append("deploy-backend")
-    if not frontend:
-        skip_tags.append("prepare-frontend")
-        skip_tags.append("deploy-frontend")
-    tags.append("deploy")
-    printer.hr(f"Deploying MyStops version {version}")
-    ansible(env, hostname, version, tags=tags, skip_tags=skip_tags)

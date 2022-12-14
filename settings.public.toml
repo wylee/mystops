@@ -1,0 +1,26 @@
+# Public Settings
+#
+# IMPORTANT: DON'T INCLUDE SENSITIVE SETTINGS IN THIS FILE!
+#
+# These are settings that are shared across all environments and are
+# safe to include in version control.
+#
+# Environment-specific settings should be added to a non-versioned
+# .env.<env> file (e.g. .env.production).
+
+[django]
+APPEND_INSTALLED_APPS = ["django.contrib.gis"]
+DATABASES.default.ENGINE = "django.contrib.gis.db.backends.postgis"
+
+[djangokit]
+package = "mystops"
+title = "MyStops"
+description = "MyStops - TriMet arrivals on a map"
+global_stylesheets = ["modern-normalize.css", "global.css"]
+ssr = false
+webmaster = "contact@mystops.io"
+noscript_message = "⛔️ MyStops requires JavaScript to be enabled in your browser ⛔️"
+
+[djangokit.intercept_extensions]
+".json" = "application/json"
+".geojson" = "application/geo+json"

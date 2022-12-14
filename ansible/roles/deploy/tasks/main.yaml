@@ -1,7 +1,9 @@
 ---
 # Create directories for version
 
-- name: Remove existing directory for version
+- name: Remove existing build directory for version
+  become: true
+  become_user: root
   file:
     path: "{{ remote_build_dir }}"
     state: absent
@@ -10,60 +12,57 @@
   file:
     path: "{{ remote_build_dir }}"
     state: directory
+    owner: "{{ site_user }}"
+    group: "{{ site_user }}"
     mode: 0751
 
 - name: Create current link to directory for version
+  become: true
+  become_user: "{{ site_user }}"
   file:
     src: "{{ remote_build_dir }}"
     dest: "{{ remote_site_root }}/current"
     state: link
 
-- name: Create back and front end directories for version
+- name: Create app directory for version
   file:
-    path: "{{ item }}"
+    path: "{{ remote_app_dir }}"
     state: directory
+    owner: "{{ site_user }}"
+    group: "{{ site_user }}"
     mode: 0751
-  with_items:
-    - "{{ remote_backend_dir }}"
-    - "{{ remote_frontend_dir }}"
 
 - name: Create pip directories
   file:
     path: "{{ item }}"
     state: directory
+    owner: "{{ site_user }}"
+    group: "{{ site_user }}"
     mode: 0750
   with_items:
     - "{{ remote_pip_root }}"
     - "{{ remote_pip_cache_dir }}"
     - "{{ remote_pip_wheel_dir }}"
 
-# Back end
+# App
 
-- name: Copy and extract back end build archive
+- name: Copy and extract app build archive
   tags:
-    - deploy-backend
+    - deploy-app
   unarchive:
-    src: "{{ backend_build_archive }}"
+    src: "{{ app_build_archive }}"
     dest: "{{ remote_build_dir }}"
+    owner: "{{ site_user }}"
+    group: "{{ site_user }}"
     mode: 0751
-
-- name: Set ownership of Django static directory
-  tags:
-    - deploy-backend
-  become: true
-  become_user: root
-  file:
-    path: "{{ remote_backend_dir }}/static"
-    state: directory
-    group: www-data
-    mode: u=rwx,g=rX,o=
-    recurse: true
 
 - name: Create virtualenv for site
   tags:
-    - deploy-backend
-    - install-backend
+    - deploy-app
+    - install-app
     - create-virtualenv
+  become: true
+  become_user: "{{ site_user }}"
   pip:
     name:
       - pip
@@ -75,18 +74,22 @@
 
 - name: Find old wheels
   tags:
-    - deploy-backend
-    - install-backend
+    - deploy-app
+    - install-app
+  become: true
+  become_user: "{{ site_user }}"
   find:
     paths: "{{ remote_pip_wheel_dir }}"
     patterns:
-      - "mystops-*.whl"
+      - "mystops*.whl"
   register: old_wheels
 
 - name: Remove old wheels
   tags:
-    - deploy-backend
-    - install-backend
+    - deploy-app
+    - install-app
+  become: true
+  become_user: "{{ site_user }}"
   file:
     path: "{{ item.path }}"
     state: absent
@@ -94,43 +97,55 @@
 
 - name: Build wheel for site
   tags:
-    - deploy-backend
-    - install-backend
+    - deploy-app
+    - install-app
+  become: true
+  become_user: "{{ site_user }}"
   command: >
     {{ remote_venv }}/bin/pip wheel
     --find-links {{ remote_dist_dir }}
     --cache-dir {{ remote_pip_cache_dir }}
     --wheel-dir {{ remote_pip_wheel_dir }}
-    {{ package }}
+    {{ package_info.dist_name }}
 
-- name: Install back end package
+- name: Install app
   tags:
     - install
+  become: true
+  become_user: "{{ site_user }}"
   pip:
     name:
-      - "{{ package }}"
+      - "{{ package_info.dist_name }}"
     state: present
     virtualenv: "{{ remote_venv }}"
     extra_args: --find-links {{ remote_pip_wheel_dir }} --no-compile --no-index
 
-# Front end
+# Static files
 
-- name: Copy front end files
+- name: Create static directory
+  file:
+    path: "{{ remote_static_dir }}"
+    state: directory
+    owner: "{{ site_user }}"
+    group: www-data
+    mode: u=rwX,g=rX,o=
+
+- name: Sync static files
   tags:
-    - deploy-frontend
+    - deploy-static
+  become: true
+  become_user: root
   synchronize:
-    src: "{{ root }}/build/"
-    dest: "{{ remote_frontend_dir }}"
-    rsync_path: sudo -u {{ site_user }} rsync
-    delete: true
+    src: "{{ static_build_dir }}/"
+    dest: "{{ remote_static_dir }}/"
 
-- name: Set ownership & permissions of front end files
+- name: Set ownership & permissions of static files
   become: true
   become_user: root
   tags:
-    - deploy-frontend
+    - deploy-static
   file:
-    path: "{{ remote_frontend_dir }}"
+    path: "{{ remote_static_dir }}"
     state: directory
     recurse: true
     owner: "{{ site_user }}"
@@ -140,17 +155,23 @@
 # Database migrations
 
 - name: Run Django migrations
-  command: ./run migrate
+  tags:
+    - deploy-migrations
+  become: true
+  become_user: "{{ site_user }}"
+  environment:
+    - ENV: "{{ env }}"
+    - PATH: "./venv/bin:$PATH"
+    - DJANGO_SETTINGS_FILE: "{{ remote_settings_file }}"
+  command: ./venv/bin/djangokit migrate
   args:
-    chdir: "{{ remote_backend_dir }}"
+    chdir: "{{ remote_app_dir }}"
 
-# Copy uWSGI app config and restart uWSGI
+# uWSGI
 
 - name: Copy uWSGI app config
   tags:
     - deploy-uwsgi
-  become: true
-  become_user: root
   template:
     src: "mystops.ini.j2"
     dest: "/etc/uwsgi/apps-enabled/{{ hostname }}.ini"
@@ -158,8 +179,6 @@
 - name: Restart uWSGI
   tags:
     - deploy-uwsgi
-  become: true
-  become_user: root
   service:
     name: uwsgi
     state: restarted
@@ -170,8 +189,6 @@
 - name: Check uWSGI restart
   tags:
     - deploy-uwsgi
-  become: true
-  become_user: root
   async_status:
     jid: "{{ uwsgi_restart.ansible_job_id }}"
   register: job_result
@@ -179,13 +196,11 @@
   retries: 6
   delay: 10
 
-# Copy Nginx app config and restart Nginx
+# Nginx
 
 - name: Copy app Nginx config
   tags:
     - deploy-nginx
-  become: true
-  become_user: root
   template:
     src: "mystops.conf.j2"
     dest: "/etc/nginx/conf.d/{{ hostname }}.conf"
@@ -193,8 +208,6 @@
 - name: Restart Nginx
   tags:
     - deploy-nginx
-  become: true
-  become_user: root
   service:
     name: nginx
     state: restarted
@@ -205,8 +218,6 @@
 - name: Check Nginx restart
   tags:
     - deploy-nginx
-  become: true
-  become_user: root
   async_status:
     jid: "{{ nginx_restart.ansible_job_id }}"
   register: job_result
@@ -219,6 +230,8 @@
 - name: Add cron HOME environment variable
   tags:
     - cron
+  become: true
+  become_user: "{{ site_user }}"
   cron:
     name: HOME
     env: true
@@ -227,14 +240,18 @@
 - name: Add cron MAILTO environment variable
   tags:
     - cron
+  become: true
+  become_user: "{{ site_user }}"
   cron:
     name: MAILTO
     env: true
-    job: contact@mystops.io
+    job: "contact@{{ hostname }}"
 
 - name: Add cron SHELL environment variable
   tags:
     - cron
+  become: true
+  become_user: "{{ site_user }}"
   cron:
     name: SHELL
     env: true
@@ -243,10 +260,12 @@
 - name: Add cron job for loading TriMet data
   tags:
     - cron
+  become: true
+  become_user: "{{ site_user }}"
   cron:
     name: Load TriMet data
     hour: "2"
     minute: "37"
     job: >-
-      cd {{ remote_backend_dir }} &&
-      ./run -e {{ env }} get-stops --overwrite load-stops load-routes load-stop-routes
+      cd {{ remote_app_dir }} &&
+      ./run load --overwrite
