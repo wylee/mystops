@@ -4,7 +4,6 @@ import styled from "styled-components";
 import axios from "axios";
 
 import { DEBUG } from "../../const";
-import { MenuComponent } from "../../components";
 
 axios.defaults.headers.common["Accept"] = "application/json";
 
@@ -42,8 +41,6 @@ export default function Page() {
   }
 
   return (
-    <>
-      <MenuComponent />
       <Container>
         <h2>{data.title}</h2>
 
@@ -56,6 +53,5 @@ export default function Page() {
 
         <div dangerouslySetInnerHTML={{ __html: data.content }} />
       </Container>
-    </>
   );
 }
