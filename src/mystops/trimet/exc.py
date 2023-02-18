@@ -1,5 +1,4 @@
 class TriMetAPIError(Exception):
-
     pass
 
 
