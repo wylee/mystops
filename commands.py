@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 import django
-from runcommands import abort, arg, command
+from runcommands import abort, arg, command, confirm
 from runcommands import commands as c
 from runcommands import printer
 from runcommands.commands import remote, sync
@@ -487,8 +487,15 @@ def clean_remote(host, run_as=SITE_USER, dry_run=False):
         paths = "\n".join(paths)
         abort(404, f"Current version not found in paths:\n{paths}")
 
-    if not paths:
-        abort(0, "No versions other than current found", color="warning")
+    if paths:
+        num_paths = len(paths)
+        ess = "" if num_paths == 1 else "s"
+        printer.info(f"Found {num_paths} old version{ess}:")
+        for path in paths:
+            printer.print(f"- {path}")
+        confirm("Permanently remove version{ess}?", abort_on_unconfirmed=True)
+    else:
+        abort(0, "No versions other than current found; nothing to do", color="warning")
 
     for path in paths:
         version = os.path.basename(path)
