@@ -39,6 +39,15 @@
     src: "{{ package_info.settings_file }}"
     dest: "{{ app_build_dir }}"
 
+- name: <LOCAL> Copy project config file to build directory
+  tags:
+    - prepare-app
+    - prepare-copy-files
+    - deploy-app
+  template:
+    src: "pyproject.toml.j2"
+    dest: "{{ app_build_dir }}/pyproject.toml"
+
 - name: <LOCAL> Copy WSGI module to build directory
   tags:
     - prepare-app
@@ -74,15 +83,6 @@
   copy:
     src: "{{ root }}/commands.py"
     dest: "{{ app_build_dir }}/commands.py"
-
-- name: <LOCAL> Copy RunCommands config file to build directory
-  tags:
-    - prepare-app
-    - prepare-copy-files
-    - deploy-app
-  template:
-    src: "runcommands.toml.j2"
-    dest: "{{ app_build_dir }}/runcommands.toml"
 
 - name: <LOCAL> Remove existing source distributions
   tags:
