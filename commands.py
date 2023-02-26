@@ -467,7 +467,7 @@ def clean_remote(host, run_as=SITE_USER, dry_run=False):
     printer.header(f"Removing old versions from {root}")
     current_path = get_current_path(host)
     current_version = os.path.basename(current_path)
-    printer.success(f"Current version: {current_version}")
+    printer.print(f"Current version: {current_version}\n")
 
     find_result = remote(
         f"find {root} -mindepth 1 -maxdepth 1 -type d -not -name '.*' -not -name 'pip'",
@@ -490,10 +490,15 @@ def clean_remote(host, run_as=SITE_USER, dry_run=False):
     if paths:
         num_paths = len(paths)
         ess = "" if num_paths == 1 else "s"
-        printer.info(f"Found {num_paths} old version{ess}:")
+        printer.print(f"Found {num_paths} old version{ess}:")
         for path in paths:
-            printer.print(f"- {path}")
-        confirm("Permanently remove version{ess}?", abort_on_unconfirmed=True)
+            printer.print(path)
+        printer.print()
+        confirm(
+            f"Permanently remove {num_paths} old version{ess}?",
+            abort_on_unconfirmed=True,
+        )
+        printer.print()
     else:
         abort(0, "No versions other than current found; nothing to do", color="warning")
 
