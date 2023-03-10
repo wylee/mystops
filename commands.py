@@ -5,14 +5,12 @@ import shutil
 from pathlib import Path
 
 import django
-from runcommands import abort, arg, command, confirm
+from mystops.trimet import api
+from runcommands import abort, arg, command, confirm, printer
 from runcommands import commands as c
-from runcommands import printer
 from runcommands.commands import remote, sync
 from runcommands.util import flatten_args
 from tzlocal import get_localzone
-
-from mystops.trimet import api
 
 TITLE = "MyStops"
 SITE_USER = "mystops"

@@ -41,17 +41,14 @@ export default function Page() {
   }
 
   return (
-      <Container>
-        <h2>{data.title}</h2>
+    <Container>
+      <h2>{data.title}</h2>
 
-        {data.lead ? (
-          <div
-            className="lead"
-            dangerouslySetInnerHTML={{ __html: data.lead }}
-          />
-        ) : null}
+      {data.lead ? (
+        <div className="lead" dangerouslySetInnerHTML={{ __html: data.lead }} />
+      ) : null}
 
-        <div dangerouslySetInnerHTML={{ __html: data.content }} />
-      </Container>
+      <div dangerouslySetInnerHTML={{ __html: data.content }} />
+    </Container>
   );
 }
