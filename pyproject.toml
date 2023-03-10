@@ -32,13 +32,13 @@ org-djangokit-cli = { path = "../djangokit/cli", develop = true }
 
 ansible = "*"
 black = "*"
-isort = "*"
 mypy = "*"
 pytest = "*"
 ruff = "*"
 
 [tool.ruff]
 ignore = ["E731"]
+select = ["E", "F", "I"]
 
 [tool.ruff.per-file-ignores]
 "commands.py" = ["F722", "F821"]
