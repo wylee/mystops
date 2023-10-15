@@ -22,7 +22,10 @@ import MapContextMenu from "./MapContextMenu";
 import MapService from "./MapService";
 import { STOP_STYLE_SELECTED } from "./map-styles";
 
-const MapContainer = styled.div`
+const MapContainer = styled.div<{
+  width: string;
+  height: string;
+}>`
   width: ${({ width }) => width};
   height: ${({ height }) => height};
   user-select: none;
