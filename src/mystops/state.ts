@@ -148,7 +148,7 @@ export const StateContext = React.createContext({
   state: INITIAL_STATE,
   dispatch: (action: Action): void => {
     throw new Error(
-      `Attempted to perform action "${action}", but StateContext was not initialized.`
+      `Attempted to perform action "${action}", but StateContext was not initialized.`,
     );
   },
 });

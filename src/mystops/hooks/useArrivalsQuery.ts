@@ -7,7 +7,7 @@ import { termToStopIds } from "../utils";
 
 export default function useArrivalsQuery(state, dispatch) {
   const [cancelTokenSource, setCancelTokenSource] = useState(
-    axios.CancelToken.source()
+    axios.CancelToken.source(),
   );
 
   useInterval(
@@ -26,7 +26,7 @@ export default function useArrivalsQuery(state, dispatch) {
     },
     state.term.trim(),
     state.term.trim() && state.doArrivalsQuery,
-    REFRESH_INTERVAL
+    REFRESH_INTERVAL,
   );
 }
 
@@ -70,7 +70,7 @@ export function useInterval(callback, term, condition, delay) {
  */
 async function arrivalsQuery(
   term: string,
-  cancelToken: CancelToken
+  cancelToken: CancelToken,
 ): Promise<Result | null> {
   let stops: number[];
 

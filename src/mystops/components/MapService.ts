@@ -53,7 +53,7 @@ type OnFeatureCallback = (
   feature: Feature,
   pixel: number[],
   layer: BaseLayer,
-  event: any
+  event: any,
 ) => any;
 
 type NoFeatureCallback = (event: Event) => any;
@@ -83,7 +83,7 @@ export default class MapService {
     private initialZoom: number = INITIAL_ZOOM,
     private minZoom: number = MIN_ZOOM,
     private maxZoom: number = MAX_ZOOM,
-    private animationDuration: number = 250
+    private animationDuration: number = 250,
   ) {
     this.view = new View({
       center: initialCenter,
@@ -178,7 +178,7 @@ export default class MapService {
     featureCallback: OnFeatureCallback,
     noFeatureCallback?: NoFeatureCallback,
     onlyLayer?: BaseLayer,
-    debounceTime?: number
+    debounceTime?: number,
   ): EventsKey {
     const map = this.map;
     let listener = (event: any) => {
@@ -194,7 +194,7 @@ export default class MapService {
           featureCallback(this, feature, pixel, layer, event);
           return feature;
         },
-        options
+        options,
       );
       if (!feature && noFeatureCallback) {
         noFeatureCallback(event);
@@ -282,7 +282,7 @@ export default class MapService {
   setExtent(
     extent: Extent,
     callback?: (completed: boolean) => any,
-    padding = [64, 64, 64, 64]
+    padding = [64, 64, 64, 64],
   ): void {
     this.view.fit(extent, {
       callback,
@@ -320,7 +320,7 @@ export default class MapService {
     this.baseLayers.forEach((layer, i) => layer.setVisible(i === baseLayer));
     this.baseLayer = baseLayer;
     this.overviewMapBaseLayers.forEach((layer, i) =>
-      layer.setVisible(i === overviewMapBaseLayer)
+      layer.setVisible(i === overviewMapBaseLayer),
     );
   }
 
@@ -344,7 +344,7 @@ export default class MapService {
   addGeolocatorListener(
     type: string,
     listener: (event: { target: Geolocation; code?: number }) => any,
-    once = false
+    once = false,
   ): EventsKey {
     const key = (
       once
@@ -410,7 +410,7 @@ function makeMapboxLayer(
   styleId: string,
   label: string,
   shortLabel?: string,
-  visible = false
+  visible = false,
 ): TileLayer<XYZSource> {
   const accessToken = DJANGO_MAPBOX_ACCESS_TOKEN;
   const source = new XYZSource({
@@ -426,7 +426,7 @@ function makeMapboxLayer(
 function makeOSMLayer(
   label = "OpenStreetMap",
   shortLabel = "OSM",
-  visible = false
+  visible = false,
 ): TileLayer<OSMSource> {
   const source = new OSMSource();
   const layer = new TileLayer({ source, visible });
@@ -450,7 +450,7 @@ function makeDebugLayer(visible = true): TileLayer<TileDebugSource> {
 function makeGeoJSONLayer(
   label: string,
   path: string,
-  options: any = {}
+  options: any = {},
 ): VectorLayer<VectorSource> {
   const source = new VectorSource({
     strategy: bboxLoadingStrategy,
@@ -459,7 +459,7 @@ function makeGeoJSONLayer(
       const bbox = transformExtent(
         extent,
         NATIVE_PROJECTION,
-        GEOGRAPHIC_PROJECTION
+        GEOGRAPHIC_PROJECTION,
       ).join(",");
       return `${path}?bbox=${bbox}`;
     },

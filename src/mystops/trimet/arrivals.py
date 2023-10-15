@@ -1,8 +1,9 @@
 import re
 import sys
-import zoneinfo
 from datetime import datetime
 from typing import Optional
+
+import zoneinfo
 
 from . import exc
 from .request import make_request

@@ -211,7 +211,7 @@ export default function MapComponent({
         dispatch({ type: "DO_ARRIVALS_QUERY", payload: true });
       },
       () => dispatch({ type: "RESET" }),
-      stopsLayer
+      stopsLayer,
     );
 
     map.onFeature(
@@ -219,7 +219,7 @@ export default function MapComponent({
       (map, feature, px) => setStopInfo(getStopInfo(map, feature, px)),
       () => setStopInfo(null),
       map.getLayer("Stops"),
-      10
+      10,
     );
 
     map.on("contextmenu", () => setStopInfo(null));
@@ -228,7 +228,7 @@ export default function MapComponent({
     map.addGeolocatorListener(
       "change",
       () => map.showUserLocation(/* zoomTo */ true),
-      /* once */ true
+      /* once */ true,
     );
 
     // Subsequent changes to user location.
@@ -269,7 +269,7 @@ export default function MapComponent({
           },
         });
       },
-      /*once */ true
+      /*once */ true,
     );
   }, [dispatch, map]);
 
@@ -456,7 +456,7 @@ interface Position {
 function getStopInfo(
   map: MapService,
   feature: Feature,
-  pixel: number[]
+  pixel: number[],
 ): StopInfo {
   const [width, height] = map.getSize();
   const [x, y] = [width / 2, height / 2];
