@@ -118,6 +118,7 @@
     certonly
     --agree-tos
     --domain {{ hostname }}
+    --domain www.{{ hostname }}
     --email letsencrypt@wyattbaldwin.com
     --standalone
     --non-interactive

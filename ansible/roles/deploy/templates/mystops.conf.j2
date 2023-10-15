@@ -1,33 +1,25 @@
 server {
-    server_name www.{{ hostname }};
+    server_name {{ hostname }} www.{{ hostname }};
     listen 80;
     listen [::]:80;
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    if ($host != $server_name) {
+    if ($host !~* ^(www\.)?{{ hostname|regex_escape }}$) {
         return 403;
     }
     return 301 https://{{ hostname }}$request_uri;
 }
 
 server {
-    server_name {{ hostname }};
-    listen 80;
-    listen [::]:80;
-    if ($host != $server_name) {
-        return 403;
-    }
-    return 301 https://$host$request_uri;
-}
-
-server {
-    server_name {{ hostname }};
+    server_name {{ hostname }} www.{{ hostname }};
 
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    if ($host != $server_name) {
+    if ($host !~* ^(www\.)?{{ hostname|regex_escape }}$) {
         return 403;
+    }
+
+    if ($host ~* ^www\.) {
+        return 301 https://{{ hostname }}$request_uri;
     }
 
     access_log /var/log/nginx/{{ hostname }}.access.log;
