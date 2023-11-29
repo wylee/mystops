@@ -68,7 +68,7 @@ def rm_dir(name, quiet=False):
 
 
 @command
-def db(data_dir="/opt/homebrew/var/postgres"):
+def db(data_dir="/opt/homebrew/var/postgresql@14"):
     """Run postgres locally."""
     c.local(("postgres", "-D", data_dir))
 

@@ -19,7 +19,7 @@ org-djangokit-cli = "~0.0.5"
 django = "^4.2.6"
 markdown = "^3.5.0"
 mercantile = "^1.2.1"
-psycopg2 = "^2.9.9"
+psycopg = "^3.1.13"
 pydantic = "^1.10.13"
 pymemcache = "^4.0.0"
 requests = "^2.31.0"
@@ -31,7 +31,6 @@ org-djangokit-core = { path = "../djangokit/core", develop = true }
 org-djangokit-cli = { path = "../djangokit/cli", develop = true }
 
 ansible = "*"
-black = "*"
 mypy = "*"
 pytest = "*"
 ruff = "*"
