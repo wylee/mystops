@@ -1,45 +1,48 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
 name = "mystops"
 version = "3.0.0.dev0"
 description = "MyStops - TriMet arrivals on a map"
-authors = ["Wyatt Baldwin <code@wyattbaldwin.com>"]
-license = "private"
+authors = [ { name = "Wyatt Baldwin", email = "code@wyattbaldwin.com" } ]
+license = { text = "private" }
 readme = "README.md"
-
-packages = [
-    { include = "mystops", from = "src" }
+requires-python = ">=3.9"
+dependencies = [
+    "django>=4.2.16",
+    "markdown>=3.7",
+    "mercantile>=1.2.1",
+    "org-djangokit-cli>=0.0.7,<0.1",
+    "org-djangokit-core>=0.0.4,<0.1",
+    "psycopg>=3.2.3",
+    "pydantic>=2.9.2",
+    "pymemcache>=4.0.0",
+    "requests>=2.32.3",
+    "ruff>=0.6.9",
+    "runcommands>=1.0a71",
+    "tzlocal>=5.2",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.9"
+[tool.uv]
+dev-dependencies = [
+    "ansible>=8.7.0",
+    "mypy>=1.11.2",
+    "pytest>=8.3.3",
+    "ruff>=0.6.9",
+    "runcommands>=1.0a71",
+]
 
-org-djangokit-core = "~0.0.4"
-org-djangokit-cli = "~0.0.5"
+[tool.uv.sources]
+org-djangokit-core = { path = "../djangokit/core", editable = true }
+org-djangokit-cli = { path = "../djangokit/cli", editable = true }
 
-django = "^4.2.6"
-markdown = "^3.5.0"
-mercantile = "^1.2.1"
-psycopg = "^3.1.13"
-pydantic = "^1.10.13"
-pymemcache = "^4.0.0"
-requests = "^2.31.0"
-runcommands = "^1.0a71"
-tzlocal = "^4.3.1"
-
-[tool.poetry.group.dev.dependencies]
-org-djangokit-core = { path = "../djangokit/core", develop = true }
-org-djangokit-cli = { path = "../djangokit/cli", develop = true }
-
-ansible = "*"
-mypy = "*"
-pytest = "*"
-ruff = "*"
-
-[tool.ruff]
+[tool.ruff.lint]
 ignore = ["E731"]
 select = ["E", "F", "I"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "commands.py" = ["F722", "F821"]
 "__init__.py" = ["F401"]
 
@@ -49,7 +52,3 @@ env = "development"
 [tool.runcommands.envs]
 development = {}
 production.host = "mystops.io"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

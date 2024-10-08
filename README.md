@@ -39,17 +39,16 @@ one from the API registration page.
 ### Installation
 
 ```shell
-poetry env use 3.9
-poetry install
-poetry run dk install
-poetry run dk migrate
-poetry run dk start
+uv sync
+uv run dk install
+uv run dk migrate
+uv run dk start
 ```
 
 ### Running
 
 ```shell
-poetry run dk start
+uv run dk start
 ```
 
 ### Stack

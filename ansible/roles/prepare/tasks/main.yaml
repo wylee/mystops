@@ -100,7 +100,7 @@
     - prepare-app
     - deploy-app
     - build-distributions
-  command: poetry build --format wheel
+  command: uv build --wheel
   args:
     chdir: "{{ item }}"
   with_items:
@@ -148,7 +148,7 @@
   environment:
     - DYLD_LIBRARY_PATH: /opt/homebrew/lib
   command: >
-    poetry run djangokit
+    uv run djangokit
     --env {{ env }}
     build-client
     --minify 
@@ -164,7 +164,7 @@
   environment:
     - DYLD_LIBRARY_PATH: /opt/homebrew/lib
   command: >
-    poetry run djangokit
+    uv run djangokit
     --env {{ env }}
     collectstatic
     --static-root {{ static_build_dir }}
