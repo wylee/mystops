@@ -36,6 +36,18 @@ dev = [
 org-djangokit-core = { path = "../djangokit/core", editable = true }
 org-djangokit-cli = { path = "../djangokit/cli", editable = true }
 
+[tool.setuptools.package-data]
+"mystops" = [
+    "**/*.css",
+    "**/*.html",
+    "**/*.ico",
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.toml",
+    "**/*.ts",
+    "**/*.tsx",
+]
+
 [tool.ruff.lint]
 ignore = ["E731"]
 select = ["E", "F", "I"]
