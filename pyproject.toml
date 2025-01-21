@@ -11,27 +11,25 @@ license = { text = "private" }
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "django>=4.2.16",
+    "org-djangokit-core>=0.0.5.dev0",
+    "org-djangokit-cli>=0.0.8.dev0",
+    "Django>=4.2.16,<5",
     "markdown>=3.7",
     "mercantile>=1.2.1",
-    "org-djangokit-cli>=0.0.7,<0.1",
-    "org-djangokit-core>=0.0.4,<0.1",
-    "psycopg>=3.2.3",
-    "pydantic>=2.9.2",
+    "psycopg>=3.2.4",
+    "pydantic>=2.10.5",
     "pymemcache>=4.0.0",
     "requests>=2.32.3",
-    "ruff>=0.6.9",
     "runcommands>=1.0a71",
     "tzlocal>=5.2",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "ansible>=8.7.0",
-    "mypy>=1.11.2",
-    "pytest>=8.3.3",
-    "ruff>=0.6.9",
-    "runcommands>=1.0a71",
+    "mypy>=1.14.1",
+    "pytest>=8.3.4",
+    "ruff>=0.9.2",
 ]
 
 [tool.uv.sources]

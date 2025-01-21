@@ -90,21 +90,23 @@
     - deploy-app
     - build-distributions
   file:
-    path: "{{ item }}/dist"
+    path: "{{ item }}"
     state: absent
-  with_items:
-    - "{{ root }}"
+  with_fileglob:
+    - "{{ root }}/dist/*"
 
 - name: <LOCAL> Build source distributions
   tags:
     - prepare-app
     - deploy-app
     - build-distributions
-  command: uv build --wheel
+  command: uv build --wheel --out-dir "{{ root }}/dist"
   args:
     chdir: "{{ item }}"
   with_items:
     - "{{ root }}"
+    - "{{ root }}/../djangokit/core"
+    - "{{ root }}/../djangokit/cli"
 
 - name: <LOCAL> Copy source distributions to build directory
   tags:
