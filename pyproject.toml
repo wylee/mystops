@@ -20,7 +20,7 @@ dependencies = [
     "pydantic>=2.10.5",
     "pymemcache>=4.0.0",
     "requests>=2.32.3",
-    "runcommands>=1.0a71",
+    "runcommands>=1.0a72",
     "tzlocal>=5.2",
 ]
 
