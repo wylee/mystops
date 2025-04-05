@@ -9,11 +9,11 @@ description = "MyStops - TriMet arrivals on a map"
 authors = [ { name = "Wyatt Baldwin", email = "code@wyattbaldwin.com" } ]
 license = { text = "private" }
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "org-djangokit-core>=0.0.5.dev0",
     "org-djangokit-cli>=0.0.8.dev0",
-    "Django>=4.2.16,<5",
+    "Django>=5.2",
     "markdown>=3.7",
     "mercantile>=1.2.1",
     "psycopg>=3.2.4",
@@ -26,7 +26,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "ansible>=8.7.0",
+    "ansible>=11.1.0",
     "mypy>=1.14.1",
     "pytest>=8.3.4",
     "ruff>=0.9.2",
@@ -49,16 +49,17 @@ org-djangokit-cli = { path = "../djangokit/cli", editable = true }
 ]
 
 [tool.ruff.lint]
-ignore = ["E731"]
 select = ["E", "F", "I"]
+ignore = ["E731"]
 
 [tool.ruff.lint.per-file-ignores]
-"commands.py" = ["F722", "F821"]
 "__init__.py" = ["F401"]
+"commands.py" = ["F722", "F821"]
 
 [tool.runcommands.globals]
 env = "development"
 
 [tool.runcommands.envs]
 development = {}
-production.host = "mystops.io"
+production.host = "app-1.wyattbaldwin.com"
+production.public_hostname = "mystops.wyattbaldwin.com"

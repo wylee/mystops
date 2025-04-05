@@ -16,6 +16,7 @@ from mystops.trimet import api
 TITLE = "MyStops"
 SITE_USER = "mystops"
 SRC_PATH = "src/mystops"
+REMOTE_SITE_DIR = "/sites/mystops"
 
 
 @command
@@ -69,7 +70,7 @@ def rm_dir(name, quiet=False):
 
 
 @command
-def db(data_dir="/opt/homebrew/var/postgresql@14"):
+def db(data_dir="/opt/homebrew/var/postgresql@17"):
     """Run postgres locally."""
     c.local(("postgres", "-D", data_dir))
 
@@ -308,7 +309,15 @@ def get_arrivals(env, *stop_ids, route_ids=()):
 
 
 @command
-def ansible(env, host, version=None, tags=(), skip_tags=(), extra_vars=()):
+def ansible(
+    env,
+    host,
+    public_hostname,
+    version=None,
+    tags=(),
+    skip_tags=(),
+    extra_vars=(),
+):
     """Run ansible playbook."""
     version = version or c.git_version()
 
@@ -331,7 +340,8 @@ def ansible(env, host, version=None, tags=(), skip_tags=(), extra_vars=()):
         skip_tags,
         extra_vars,
         ("--extra-var", f"env={env}"),
-        ("--extra-var", f"hostname={host}"),
+        ("--extra-var", f"host={host}"),
+        ("--extra-var", f"public_hostname={public_hostname}"),
         ("--extra-var", f"version={version}"),
     )
 
@@ -345,17 +355,17 @@ def ansible(env, host, version=None, tags=(), skip_tags=(), extra_vars=()):
 
 
 @command
-def provision(env, host):
+def provision(env, host, public_hostname):
     """Provision the deployment host."""
-    printer.header(f"Provisioning {host} ({env})")
-    ansible(env, host, tags="provision")
+    printer.header(f"Provisioning {public_hostname} ({env})")
+    ansible(env, host, public_hostname, tags="provision")
 
 
 @command
-def upgrade_remote(env, host):
+def upgrade_remote(env, host, public_hostname):
     """Upgrade the deployment host."""
-    printer.header(f"Upgrading {host} ({env})")
-    ansible(env, host, tags="provision-update-packages")
+    printer.header(f"Upgrading {public_hostname} ({env})")
+    ansible(env, host, public_hostname, tags="provision-update-packages")
 
 
 def remove_build_dir():
@@ -368,6 +378,7 @@ def remove_build_dir():
 def prepare(
     env,
     host,
+    public_hostname,
     version=None,
     provision_=False,
     clean_: arg(help="Remove build directory? [no]") = True,
@@ -387,13 +398,14 @@ def prepare(
 
     printer.print()
 
-    ansible(env, host, tags=tags, extra_vars={"version": version})
+    ansible(env, host, public_hostname, tags=tags, extra_vars={"version": version})
 
 
 @command
 def deploy(
     env: arg(help="Build/deployment environment"),
-    host: arg(help="Host to deploy to"),
+    host: arg(help="Deployment host"),
+    public_hostname: arg(help="Public-facing hostname"),
     version: arg(help="Name of version being deployed [short git hash]") = None,
     provision_: arg(help="Run provisioning steps? [no]") = False,
     prepare_: arg(
@@ -425,7 +437,7 @@ def deploy(
 
     printer.header(f"Deploying {TITLE} website version {version} to {env}")
     printer.print(f"env = {env}")
-    printer.print(f"host = {host}")
+    printer.print(f"public_hostname = {public_hostname}")
     printer.print(f"version = {version}")
     printer.print(f"provision = {bool_as_str(provision_)}")
     printer.print(f"local prep = {bool_as_str(prepare_)}")
@@ -438,15 +450,14 @@ def deploy(
 
     printer.print()
 
-    ansible(env, host, version, tags=tags, skip_tags=skip_tags)
+    ansible(env, host, public_hostname, version, tags=tags, skip_tags=skip_tags)
 
 
-def get_current_path(host):
-    root = f"/sites/{host}"
+def get_current_path():
+    root = REMOTE_SITE_DIR
     readlink_result = remote(
         "readlink current",
         run_as=SITE_USER,
-        cd=root,
         stdout="capture",
     )
     current_path = readlink_result.stdout.strip()
@@ -456,20 +467,21 @@ def get_current_path(host):
 
 
 @command
-def clean_remote(host, run_as=SITE_USER, dry_run=False):
+def clean_remote(run_as=SITE_USER, dry_run=False):
     """Clean up remote.
 
     Removes old deployments under the site root.
 
     """
-    root = f"/sites/{host}"
+    root = REMOTE_SITE_DIR
     printer.header(f"Removing old versions from {root}")
-    current_path = get_current_path(host)
+    current_path = get_current_path()
     current_version = os.path.basename(current_path)
+    printer.print(f"Current path: {current_path}")
     printer.print(f"Current version: {current_version}\n")
 
     find_result = remote(
-        f"find {root} -mindepth 1 -maxdepth 1 -type d -not -name '.*' -not -name 'pip'",
+        f"find {root} -mindepth 1 -maxdepth 1 -type d",
         run_as=run_as,
         stdout="capture",
     )
@@ -528,7 +540,7 @@ def push_settings(env, host):
     doing a full redeployment.
 
     """
-    current_path = get_current_path(host)
+    current_path = get_current_path()
     app_dir = posixpath.join(current_path, "app/")
     printer.header(f"Pushing {env} settings to {host}:{app_dir}")
     sync(f"settings.{env}.toml", app_dir, host, run_as=SITE_USER)

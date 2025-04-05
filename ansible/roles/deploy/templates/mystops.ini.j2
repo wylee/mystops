@@ -13,11 +13,11 @@ workers = 2
 enable-threads = true
 threads = 4
 
-logto2 = /sites/{{ hostname }}/uwsgi.log
+logto2 = /sites/mystops/uwsgi.log
 
-chdir = /sites/{{ hostname }}/current/app
-virtualenv = /sites/{{ hostname }}/current/app/venv
-wsgi-file = /sites/{{ hostname }}/current/app/wsgi.py
+chdir = /sites/mystops/current/app
+virtualenv = /sites/mystops/current/app/venv
+wsgi-file = /sites/mystops/current/app/wsgi.py
 
 single-interpreter = true
 

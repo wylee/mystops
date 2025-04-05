@@ -84,29 +84,40 @@
     src: "{{ root }}/commands.py"
     dest: "{{ app_build_dir }}/commands.py"
 
+- name: <LOCAL> Copy RunCommands config file to build directory
+  tags:
+    - prepare-app
+    - prepare-copy-files
+    - deploy-app
+  template:
+    src: "runcommands.toml.j2"
+    dest: "{{ app_build_dir }}/runcommands.toml"
+
 - name: <LOCAL> Remove existing source distributions
   tags:
     - prepare-app
     - deploy-app
     - build-distributions
   file:
-    path: "{{ item }}"
+    path: "{{ item }}/dist"
     state: absent
-  with_fileglob:
-    - "{{ root }}/dist/*"
+  with_items:
+    - "{{ root }}"
+    - "{{ core_root }}"
+    - "{{ cli_root }}"
 
 - name: <LOCAL> Build source distributions
   tags:
     - prepare-app
     - deploy-app
     - build-distributions
-  command: uv build --wheel --out-dir "{{ root }}/dist"
+  command: uv build --wheel
   args:
     chdir: "{{ item }}"
   with_items:
     - "{{ root }}"
-    - "{{ root }}/../djangokit/core"
-    - "{{ root }}/../djangokit/cli"
+    - "{{ core_root }}"
+    - "{{ cli_root }}"
 
 - name: <LOCAL> Copy source distributions to build directory
   tags:
@@ -118,6 +129,8 @@
     dest: "{{ app_build_dir }}/dist/"
   with_fileglob:
     - "{{ root }}/dist/*"
+    - "{{ core_root }}/dist/*"
+    - "{{ cli_root }}/dist/*"
 
 - name: <LOCAL> Create build archive
   tags:

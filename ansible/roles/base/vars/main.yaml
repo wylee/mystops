@@ -1,5 +1,7 @@
 ---
 root: "{{ lookup('env', 'PWD') }}"
+core_root: "{{ root }}/../djangokit/core"
+cli_root: "{{ root }}/../djangokit/cli"
 
 # Base name of env-specific settings file (used on local & remote)
 settings_file: "settings.{{ env }}.toml"
@@ -31,7 +33,7 @@ static_build_dir: "{{ build_root }}/static"
 # Remote ---------------------------------------------------------------
 
 site_user: "mystops"
-remote_site_root: "/sites/{{ hostname }}"
+remote_site_root: "/sites/mystops"
 
 # Directory for build/version
 remote_build_dir: "{{ remote_site_root }}/{{ version }}"

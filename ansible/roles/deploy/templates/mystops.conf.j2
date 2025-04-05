@@ -1,33 +1,32 @@
 server {
-    server_name {{ hostname }} www.{{ hostname }};
+    server_name {{ public_hostname }};
+
     listen 80;
     listen [::]:80;
-    if ($host !~* ^(www\.)?{{ hostname|regex_escape }}$) {
+
+    if ($host != $server_name) {
         return 403;
     }
-    return 301 https://{{ hostname }}$request_uri;
+
+    return 301 https://$host$request_uri;
 }
 
 server {
-    server_name {{ hostname }} www.{{ hostname }};
+    server_name {{ public_hostname }};
 
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    if ($host !~* ^(www\.)?{{ hostname|regex_escape }}$) {
+    if ($host != $server_name) {
         return 403;
     }
 
-    if ($host ~* ^www\.) {
-        return 301 https://{{ hostname }}$request_uri;
-    }
+    access_log /var/log/nginx/{{ public_hostname }}.access.log;
+    error_log /var/log/nginx/{{ public_hostname }}.error.log;
 
-    access_log /var/log/nginx/{{ hostname }}.access.log;
-    error_log /var/log/nginx/{{ hostname }}.error.log;
-
-    ssl_certificate /etc/letsencrypt/live/{{ hostname }}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{ hostname }}/privkey.pem;
-    ssl_dhparam /etc/pki/nginx/{{ hostname }}.pem;
+    ssl_certificate /etc/letsencrypt/live/{{ public_hostname }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ public_hostname }}/privkey.pem;
+    ssl_dhparam /etc/pki/nginx/{{ public_hostname }}.pem;
     ssl_session_cache shared:SSL:1m;
     ssl_session_timeout 10m;
     ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
@@ -37,11 +36,11 @@ server {
     location /static {
         expires 1y;
         add_header cache-control "public, immutable";
-        alias /sites/{{ hostname }}/static;
+        alias /sites/mystops/static;
     }
 
     location / {
-        uwsgi_pass unix:/run/uwsgi/app/{{ hostname }}/socket;
+        uwsgi_pass unix:/run/uwsgi/app/{{ public_hostname }}/socket;
         include uwsgi_params;
     }
 }
