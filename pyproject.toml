@@ -62,4 +62,4 @@ env = "development"
 [tool.runcommands.envs]
 development = {}
 production.host = "app-1.wyattbaldwin.com"
-production.public_hostname = "mystops.wyattbaldwin.com"
+production.public_hostname = "mystops.io"
