@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block main %}
+    <style>
+        header {
+            position: sticky;
+        }
+    </style>
+
+    <div style="padding: 1rem;">
+        <h2>{{ data.page.title }}</h2>
+
+        {% if data.page.lead %}
+            <div class="lead">
+                {{ data.page.lead|safe }}
+            </div>
+        {% endif %}
+
+        <div>
+            {{ data.page.content|safe }}
+        </div>
+    </div>
+{% endblock main %}⏎

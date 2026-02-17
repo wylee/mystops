@@ -31,7 +31,7 @@ class Page(models.Model):
     published = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0, null=False)
 
-    serialize = lambda self: PageSchema.from_orm(self).dict()
+    serialize = lambda self: PageSchema.model_validate(self).model_dump()
 
     def __str__(self):
         return (

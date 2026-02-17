@@ -4,4 +4,5 @@ from ...models import Page
 
 
 def get(_request, slug):
-    return get_object_or_404(Page, slug=slug)
+    page = get_object_or_404(Page, slug=slug)
+    return {"page": page.serialize()}

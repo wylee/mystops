@@ -11,15 +11,15 @@
 [django]
 APPEND_INSTALLED_APPS = ["django.contrib.gis"]
 DATABASES.default.ENGINE = "django.contrib.gis.db.backends.postgis"
+STORAGES.default.BACKEND = "django.core.files.storage.FileSystemStorage"
+STORAGES.staticfiles.BACKEND = "djangokit.core.static.ManifestStaticFilesStorage"
 
 [djangokit]
 package = "mystops"
 title = "MyStops"
 description = "MyStops - TriMet arrivals on a map"
-global_stylesheets = ["modern-normalize.css", "global.css"]
-ssr = false
+global_stylesheets = ["lib/bootstrap-reboot.css", "global.css"]
 webmaster = "contact@mystops.io"
-noscript_message = "⛔️ MyStops requires JavaScript to be enabled in your browser ⛔️"
 
 [djangokit.intercept_extensions]
 ".json" = "application/json"

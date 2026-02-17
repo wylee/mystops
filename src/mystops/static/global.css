@@ -1,104 +1,162 @@
 :root {
-  --text-color: #303030;
+    --text-color: #303030;
 
-  --link-color: steelblue;
-  --link-color-hover: orange;
+    --link-color: steelblue;
+    --link-color-hover: orange;
 
-  --standard-spacing: 1rem;
-  --half-standard-spacing: 0.5rem;
-  --quarter-standard-spacing: 0.25rem;
-  --twice-standard-spacing: 2rem;
+    --standard-spacing: 1rem;
+    --half-standard-spacing: 0.5rem;
+    --quarter-standard-spacing: 0.25rem;
+    --twice-standard-spacing: 2rem;
 
-  --xs-width: 480px;
-  --xs-max-width: 479px;
-  --sm-width: 600px;
-  --sm-max-width: 599px;
-  --md-width: 840px;
-  --md-max-width: 839px;
+    --xs-width: 480px;
+    --xs-max-width: 479px;
+    --sm-width: 600px;
+    --sm-max-width: 599px;
+    --md-width: 840px;
+    --md-max-width: 839px;
 
-  --border-radius: var(--quarter-standard-spacing);
+    --border-radius: var(--quarter-standard-spacing);
 
-  --panel-width: 400px;
-  --panel-width-xs: 300px;
+    --panel-width: 400px;
+    --panel-width-xs: 300px;
 
-  --menu-width: 100%;
+    --menu-width: 100%;
 }
 
 @media (min-width: 480px) {
-  :root {
-    --menu-width: 320px;
-  }
+    :root {
+        --menu-width: 320px;
+    }
 }
 
 html, body, #root {
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  user-select: none;
-  background-color: #f4f8ff;
-  color: var(--text-color);
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    background-color: #f4f8ff;
+    color: var(--text-color);
+    font-family: Avenir, Helvetica, Arial, sans-serif;
 }
 
 button.icon-button:disabled:hover {
-  border: none;
-  box-shadow: none;
-  cursor: auto;
+    border: none;
+    box-shadow: none;
+    cursor: auto;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  margin-top: 0;
-  margin-bottom: var(--standard-spacing);
+    margin-top: 0;
+    margin-bottom: var(--standard-spacing);
 }
 
 a {
-  color: var(--link-color);
-  text-decoration: none;
+    color: var(--link-color);
+    text-decoration: none;
 }
+
 a:hover {
-  color: var(--link-color-hover);
-  text-decoration: underline;
+    color: var(--link-color-hover);
+    text-decoration: underline;
+}
+
+header {
+    position: absolute;
+
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.75);
+
+    h1 {
+        font-size: 20px;
+        font-weight: normal;
+        line-height: 1;
+        margin: 0;
+        padding: var(--half-standard-spacing);
+
+        > a {
+            color: #4a4a4a;
+            font-size: 20px;
+            line-height: 1;
+            text-decoration: none;
+            text-shadow: 1px 1px 2px;
+        }
+    }
+
+    @media (max-width: 240px) {
+        display: none;
+    }
+
+    @media (min-width: 600px) {
+        top: 0;
+        bottom: auto;
+        justify-content: flex-end;
+        h1 {
+            font-size: 24px;
+            padding: 24px 16px;
+
+            > a {
+                font-size: 24px;
+            }
+        }
+    }
+}
+
+main {
+    width: 100%;
+    height: 100%;
 }
 
 .row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
+
 .row > * {
-  margin-right: var(--quarter-standard-spacing);
+    margin-right: var(--quarter-standard-spacing);
 }
+
 .row > *:last-child {
-  margin-right: 0;
+    margin-right: 0;
 }
 
 .lead {
-  font-size: 112%;
-  margin-bottom: var(--standard-spacing);
+    font-size: 112%;
+    margin-bottom: var(--standard-spacing);
 }
 
 .small {
-  font-size: 92%
+    font-size: 92%
 }
 
 @keyframes blinker {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.25;
-  }
-  100% {
-    opacity: 1;
-  }
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.25;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 @keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }

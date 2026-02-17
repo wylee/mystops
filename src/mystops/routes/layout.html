@@ -1,0 +1,12 @@
+{% extends "app.html" %}
+
+{% block layout %}
+    <header>
+        <h1><a href="/">MyStops</a></h1>
+    </header>
+
+    <main id="main">
+        {% block main %}
+        {% endblock main %}
+    </main>
+{% endblock layout %}
