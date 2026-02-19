@@ -18,7 +18,11 @@ STORAGES.staticfiles.BACKEND = "djangokit.core.static.ManifestStaticFilesStorage
 package = "mystops"
 title = "MyStops"
 description = "MyStops - TriMet arrivals on a map"
-global_stylesheets = ["lib/bootstrap-reboot.css", "global.css"]
+global_stylesheets = [
+    "lib/bootstrap-reboot.css",
+    "lib/bootstrap-icons/bootstrap-icons.css",
+    "global.css",
+]
 webmaster = "contact@mystops.io"
 
 [djangokit.intercept_extensions]

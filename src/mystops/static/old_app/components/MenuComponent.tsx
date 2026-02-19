@@ -262,19 +262,17 @@ export default function MenuComponent() {
                 </p>
 
                 <p>
-                  This application is currently in the initial stages of
-                  development and <i>should not</i> be considered a reliable
-                  source for TriMet arrival times or any other information.
-                  Arrival times and other information <i>should</i> be verified
-                  via{" "}
+                  This application is currently in the initial stages of development and{" "}
+                  <i>should not</i> be considered a reliable source for TriMet arrival
+                  times or any other information. Arrival times and other information{" "}
+                  <i>should</i> be verified via{" "}
                   <a href="https://trimet.org/">
                     TriMet&apos;s official TransitTracker™
                   </a>{" "}
                   or by other means.
                 </p>
                 <p>
-                  Contact:{" "}
-                  <a href="mailto:contact@mystops.io">contact@mystops.io</a>
+                  Contact: <a href="mailto:contact@mystops.io">contact@mystops.io</a>
                 </p>
                 <p>&copy; 2018, 2021, 2022 mystops.io</p>
               </div>

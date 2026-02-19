@@ -39,10 +39,7 @@ const MenuItem = styled.li`
   }
 `;
 
-export default function MapContextMenu({
-  state: { x, y, open },
-  setState,
-}: Props) {
+export default function MapContextMenu({ state: { x, y, open }, setState }: Props) {
   const map = useContext(MapContext);
 
   // This will cause the menu to be closed on *any* click.

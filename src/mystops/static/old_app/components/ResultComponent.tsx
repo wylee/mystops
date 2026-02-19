@@ -114,9 +114,7 @@ export default function ResultComponent() {
                           return (
                             <Arrival
                               key={i}
-                              className={`designation-${
-                                arrival.designation || "none"
-                              }`}
+                              className={`designation-${arrival.designation || "none"}`}
                             >
                               <div>{arrival.status}</div>
                               <div title={kilometersAway(arrival)}>

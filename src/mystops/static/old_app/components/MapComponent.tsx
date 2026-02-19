@@ -1,13 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
-import {
-  FaGlobe,
-  FaLocationArrow,
-  FaMap,
-  FaMinus,
-  FaPlus,
-} from "react-icons/fa";
+import { FaGlobe, FaLocationArrow, FaMap, FaMinus, FaPlus } from "react-icons/fa";
 
 import Feature from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
@@ -146,10 +140,7 @@ interface Props {
   height?: string;
 }
 
-export default function MapComponent({
-  width = "100%",
-  height = "100%",
-}: Props) {
+export default function MapComponent({ width = "100%", height = "100%" }: Props) {
   const { state, dispatch } = useStateContext();
 
   const map = useContext(MapContext);
@@ -341,9 +332,7 @@ export default function MapComponent({
           onClick={() => map?.nextBaseLayer()}
           onContextMenu={closeMenu}
         >
-          <div className="label">
-            {map?.getNextBaseLayer().get("shortLabel")}
-          </div>
+          <div className="label">{map?.getNextBaseLayer().get("shortLabel")}</div>
         </OverviewMapContainer>
       </ControlsBL>
 
@@ -370,10 +359,7 @@ export default function MapComponent({
           <FaLocationArrow />
         </IconButton>
 
-        <IconButton
-          title="Zoom to full extent"
-          onClick={setInitialCenterAndZoom}
-        >
+        <IconButton title="Zoom to full extent" onClick={setInitialCenterAndZoom}>
           <FaGlobe />
         </IconButton>
 
@@ -456,11 +442,7 @@ interface Position {
   left: string;
 }
 
-function getStopInfo(
-  map: MapService,
-  feature: Feature,
-  pixel: number[],
-): StopInfo {
+function getStopInfo(map: MapService, feature: Feature, pixel: number[]): StopInfo {
   const [width, height] = map.getSize();
   const [x, y] = [width / 2, height / 2];
   const buffer = 10;

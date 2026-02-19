@@ -1,9 +1,17 @@
 {% extends "layout.html" %}
 
+{% load static %}
+
 {% block main %}
     {# MENU COMPONENT #}
     {# SEARCH COMPONENT #}
     {# RESULT COMPONENT #}
     {# ERROR COMPONENT #}
     {# MAP COMPONENT #}
+    <mystops-map></mystops-map>
 {% endblock main %}⏎
+
+{% block scripts %}
+    {{ super.scripts }}
+    <script type="module" src="{% static "build/app.js" %}"></script>
+{% endblock scripts %}

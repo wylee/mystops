@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "baseUrl": ".",
+    "experimentalDecorators": true,
+    "jsx": "preserve",
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "target": "ES2024",
+    "useDefineForClassFields": false
+  }
+}

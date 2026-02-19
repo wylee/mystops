@@ -155,9 +155,7 @@ export default class MapService {
     });
 
     this.on("moveend", () => {
-      this.overviewMap
-        .getView()
-        .animate({ center: this.getCenter(), duration: 200 });
+      this.overviewMap.getView().animate({ center: this.getCenter(), duration: 200 });
     });
   }
 
@@ -184,9 +182,7 @@ export default class MapService {
     let listener = (event: any) => {
       const pixel = event.pixel;
       const options = {
-        layerFilter: onlyLayer
-          ? (layer: any) => layer === onlyLayer
-          : undefined,
+        layerFilter: onlyLayer ? (layer: any) => layer === onlyLayer : undefined,
       };
       const feature = map.forEachFeatureAtPixel(
         pixel,
@@ -381,11 +377,7 @@ export default class MapService {
       });
       feature.setStyle(USER_LOCATION_STYLE);
       source.addFeature(feature);
-      if (
-        accuracy &&
-        accuracy > USER_LOCATION_ACCURACY_THRESHOLD &&
-        accuracyGeom
-      ) {
+      if (accuracy && accuracy > USER_LOCATION_ACCURACY_THRESHOLD && accuracyGeom) {
         const accuracyFeature = new Feature({
           geometry: accuracyGeom,
         });
