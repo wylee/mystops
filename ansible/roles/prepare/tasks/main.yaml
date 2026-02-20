@@ -171,13 +171,11 @@
     - prepare-static
     - prepare-static-build
     - deploy-static
-  environment:
-    - DYLD_LIBRARY_PATH: /opt/homebrew/lib
   command: >
     uv run djangokit
     --env {{ env }}
     collectstatic
-    --ignore '*.ts'
+    --clear
     --static-root {{ static_build_dir }}
   args:
     chdir: "{{ root }}"

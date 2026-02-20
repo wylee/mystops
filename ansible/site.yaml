@@ -17,6 +17,8 @@
     - prepare
   tags:
     - prepare
+  environment:
+    DYLD_LIBRARY_PATH: /opt/homebrew/lib:/opt/homebrew/lib/postgresql@17
 
 - name: Deploy
   hosts:
