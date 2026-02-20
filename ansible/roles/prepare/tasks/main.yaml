@@ -141,9 +141,9 @@
     path: "{{ app_build_dir }}"
     dest: "{{ app_build_archive }}"
 
-# Static files, including SSR
+# Static files
 
-- name: <LOCAL> Remove client & static build directories
+- name: <LOCAL> Remove static directories
   tags:
     - prepare-static
     - prepare-static-clean
@@ -155,21 +155,16 @@
     - "{{ package_info.static_build_dir }}"
     - "{{ static_build_dir }}"
 
-- name: <LOCAL> Build client bundle
+- name: <LOCAL> Build app bundle
   tags:
     - prepare-static
     - prepare-static-build
     - deploy-static
   environment:
-    - DYLD_LIBRARY_PATH: /opt/homebrew/lib
-  command: >
-    uv run djangokit
-    --env {{ env }}
-    build-client
-    --minify 
+  command: rollup -c
   args:
     chdir: "{{ root }}"
-    creates: "{{ package_info.static_build_dir }}/client.bundle.js"
+    creates: "{{ package_info.static_build_dir }}/app.js"
 
 - name: <LOCAL> Collect Django static files
   tags:
@@ -182,6 +177,7 @@
     uv run djangokit
     --env {{ env }}
     collectstatic
+    --ignore '*.ts'
     --static-root {{ static_build_dir }}
   args:
     chdir: "{{ root }}"

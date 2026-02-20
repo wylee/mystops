@@ -1,4 +1,5 @@
 import os
+import platform
 import posixpath
 import re
 import shutil
@@ -31,10 +32,8 @@ def clean(deep=False):
     """
     printer.header("Cleaning...")
 
-    rm_dir("build")
     rm_dir("dist")
     rm_dir("static")
-    rm_dir(f"{SRC_PATH}/app/build")
     rm_dir(f"{SRC_PATH}/website/static/build")
     rm_dir(".mypy_cache")
     rm_dir(".pytest_cache")
@@ -68,28 +67,42 @@ def rm_dir(name, quiet=False):
 
 # Database -------------------------------------------------------------
 
+if platform.system() == "Darwin" and os.path.isdir("/opt/homebrew"):
+    POSTGRES_BIN = "/opt/homebrew/Cellar/postgresql@17/17.8/bin/"
+    POSTGRES_DATA_DIR = "/opt/homebrew/var/postgresql@17"
+    os.environ["DYLD_LIBRARY_PATH"] = "/opt/homebrew/lib/postgresql@17"
+else:
+    # Assume postgres is on $PATH and require data path.
+    POSTGRES_BIN = ""
+    POSTGRES_DATA_DIR = None
+
 
 @command
-def db(data_dir="/opt/homebrew/var/postgresql@17"):
+def db(postgres_bin=POSTGRES_BIN, postgres_data=POSTGRES_DATA_DIR):
     """Run postgres locally."""
-    c.local(("postgres", "-D", data_dir))
+    if not postgres_data:
+        abort(1, "Postgres data directory is required")
+    c.local((f"{postgres_bin}postgres", "-D", postgres_data))
 
 
 @command
-def db_setup():
+def db_setup(postgres_bin=POSTGRES_BIN):
     """Set up local mystops database."""
     commands = [
-        "createuser --login mystops",
-        "createdb --owner mystops mystops",
-        "psql -c 'create extension postgis' mystops",
+        f"{postgres_bin}createuser --login mystops",
+        f"{postgres_bin}createdb --owner mystops mystops",
+        f"{postgres_bin}psql -c 'create extension postgis' mystops",
     ]
     for cmd in commands:
+        printer.info(cmd)
         result = c.local(cmd, stderr="capture", raise_on_error=False)
         if result.failed:
             if "exists" in result.stderr:
                 printer.print("[red]exists[/red]:", cmd)
             else:
                 abort(1, result.stderr)
+        else:
+            printer.success("Done")
 
 
 # Docker ---------------------------------------------------------------

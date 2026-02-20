@@ -33,32 +33,67 @@ verified via TriMet's official TransitTracker™ or by other means.
 * Arrivals: http://developer.trimet.org/ws_docs/arrivals2_ws.shtml
 * Stops: http://developer.trimet.org/ws_docs/stop_location_ws.shtml
 
-NOTE: You'll need a TriMet API key for use in development. You can get
-one from the API registration page.
+You'll need a TriMet API key for use in development. Get one from the
+API registration page and it to `settings.development.toml` along with
+the output directory for data retrieved from the TriMet API:
+
+```toml
+[django]
+TRIMET_API_KEY = "1234567890ABCDEFGHIJKLMNO"
+TRIMET_DATA_DIR = "./data/trimet"
+```
 
 ### Installation
 
 ```shell
 uv sync
+
+# uv sync && npm install
 uv run dk install
+```
+
+### Development Database Setup (macOS / Homebrew)
+
+```shell
+brew install postgresql@17
+brew install postgis
+```
+
+NOTE: Homebrew's `postgis` package doesn't work with its `postgresql@16`
+package so we use version 17 instead.
+
+### Setup
+
+```shell
+# NOTE: This can be skipped if you have a global Postgres service running.
+uv run run db
+
+uv run run db-setup
 uv run dk migrate
-uv run dk start
+uv run run load
 ```
 
 ### Running
 
 ```shell
+# Start the dev database
+uv run run db
+
+# Start dev server and watch for changes
 uv run dk start
+
+# Build front end and watch for changes
+rollup -c --watch
 ```
 
 ### Stack
 
 * Linux
-* PostgreSQL 13
+* PostgreSQL 16
 * PostGIS 3
-* Python 3.9
-* Django 4.2
+* Python 3.14
+* Django 6
+* DjangoKit
 * TypeScript
-* React
-* React Router
+* Lit
 * OpenLayers

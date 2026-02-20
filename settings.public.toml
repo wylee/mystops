@@ -11,6 +11,10 @@
 [django]
 APPEND_INSTALLED_APPS = ["django.contrib.gis"]
 DATABASES.default.ENGINE = "django.contrib.gis.db.backends.postgis"
+STATICFILES_DIRS = [
+    ["bootstrap/css", "node_modules/bootstrap/dist/css"],
+    ["bootstrap-icons", "node_modules/bootstrap-icons/font"],
+]
 STORAGES.default.BACKEND = "django.core.files.storage.FileSystemStorage"
 STORAGES.staticfiles.BACKEND = "djangokit.core.static.ManifestStaticFilesStorage"
 
@@ -19,8 +23,8 @@ package = "mystops"
 title = "MyStops"
 description = "MyStops - TriMet arrivals on a map"
 global_stylesheets = [
-    "lib/bootstrap-reboot.css",
-    "lib/bootstrap-icons/bootstrap-icons.css",
+    "bootstrap/css/bootstrap-reboot.css",
+    "bootstrap-icons/bootstrap-icons.css",
     "global.css",
 ]
 webmaster = "contact@mystops.io"
