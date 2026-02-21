@@ -1,5 +1,4 @@
 import os
-import platform
 import posixpath
 import re
 import shutil
@@ -67,18 +66,12 @@ def rm_dir(name, quiet=False):
 
 # Database -------------------------------------------------------------
 
-if platform.system() == "Darwin" and os.path.isdir("/opt/homebrew"):
-    POSTGRES_BIN = "/opt/homebrew/Cellar/postgresql@17/17.8/bin/"
-    POSTGRES_DATA_DIR = "/opt/homebrew/var/postgresql@17"
-    os.environ["DYLD_LIBRARY_PATH"] = "/opt/homebrew/lib/postgresql@17"
-else:
-    # Assume postgres is on $PATH and require data path.
-    POSTGRES_BIN = ""
-    POSTGRES_DATA_DIR = None
-
 
 @command
-def db(postgres_bin=POSTGRES_BIN, postgres_data=POSTGRES_DATA_DIR):
+def db(
+    postgres_bin: arg(envvar="MYSTOPS_POSTGRES_BIN") = None,
+    postgres_data: arg(envvar="MYSTOPS_POSTGRES_DATA_DIR") = None,
+):
     """Run postgres locally."""
     if not postgres_data:
         abort(1, "Postgres data directory is required")
@@ -86,7 +79,9 @@ def db(postgres_bin=POSTGRES_BIN, postgres_data=POSTGRES_DATA_DIR):
 
 
 @command
-def db_setup(postgres_bin=POSTGRES_BIN):
+def db_setup(
+    postgres_bin: arg(envvar="MYSTOPS_POSTGRES_BIN") = None,
+):
     """Set up local mystops database."""
     commands = [
         f"{postgres_bin}createuser --login mystops",
