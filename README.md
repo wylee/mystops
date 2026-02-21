@@ -83,7 +83,7 @@ uv run run db
 uv run dk start
 
 # Build front end and watch for changes
-rollup -c --watch
+rollup --config --watch
 ```
 
 ### Stack
