@@ -31,9 +31,10 @@ def clean(deep=False):
     """
     printer.header("Cleaning...")
 
+    rm_dir("build")
     rm_dir("dist")
     rm_dir("static")
-    rm_dir(f"{SRC_PATH}/website/static/build")
+    rm_dir(f"{SRC_PATH}/static/build")
     rm_dir(".mypy_cache")
     rm_dir(".pytest_cache")
     rm_dir(".ruff_cache")
