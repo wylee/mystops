@@ -1,6 +1,7 @@
-import { LitElement, html, css } from "lit-element";
-import { customElement, state } from "lit/decorators.js";
+import { css, html, LitElement } from "lit-element";
+import { customElement, property, state } from "lit/decorators.js";
 import { getStyleSheet, iconButton } from "../style";
+import MapService from "../services/map-service";
 
 @customElement("mystops-menu")
 class MenuElement extends LitElement {
@@ -11,6 +12,7 @@ class MenuElement extends LitElement {
     iconButton,
 
     css`
+      /* Container */
       #main-menu {
         position: absolute;
         top: 0;
@@ -28,6 +30,7 @@ class MenuElement extends LitElement {
         right: auto;
       }
 
+      /* Toggle button */
       #main-menu > button {
         position: absolute;
         top: var(--quarter-standard-spacing);
@@ -40,6 +43,7 @@ class MenuElement extends LitElement {
         }
       }
 
+      /* Backdrop */
       #main-menu > #backdrop {
         position: absolute;
         top: 0;
@@ -51,6 +55,7 @@ class MenuElement extends LitElement {
         background-color: rgba(0, 0, 0, 0.25);
       }
 
+      /* Menu Items */
       #main-menu > ul {
         position: absolute;
         top: 0;
@@ -68,99 +73,103 @@ class MenuElement extends LitElement {
         border-radius: 2px;
         box-shadow: 2px 2px 4px;
         list-style: none;
-      }
 
-      #main-menu > ul > li {
-        border-bottom: 1px solid #e0e0e0;
+        & > li {
+          border-bottom: 1px solid #e0e0e0;
 
-        margin: 0;
-        padding: 0;
-
-        &:hover {
-          background-color: #f8f8f8;
-        }
-
-        &:last-child {
-          border-bottom: none;
-        }
-
-        /* Each menu item must contain a top level wrapper element */
-        & > * {
-          color: var(--text-color);
-
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-
-          line-height: 24px;
           margin: 0;
-          padding: var(--standard-spacing);
-          text-decoration: none;
+          padding: 0;
 
+          &:hover {
+            background-color: #f8f8f8;
+          }
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          /* Each menu item must contain a top level wrapper element */
           & > * {
-            margin-right: var(--half-standard-spacing);
-            &:last-child {
-              margin-right: 0;
+            background-color: transparent;
+            color: var(--text-color);
+
+            border: none;
+
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+
+            line-height: 24px;
+            margin: 0;
+            padding: var(--standard-spacing);
+            text-decoration: none;
+
+            & > * {
+              margin-right: var(--half-standard-spacing);
+              &:last-child {
+                margin-right: 0;
+              }
             }
           }
-        }
-
-        a {
-          color: var(--link-color);
-        }
-
-        &.title {
-          color: lighten(var(--text-color), 10%);
-          font-size: 16px;
-          font-weight: normal;
-          line-height: 1;
-          margin: 0;
-          padding: var(--standard-spacing);
-          text-shadow: 1px 1px 2px;
 
           a {
+            color: var(--link-color);
+          }
+
+          &.title {
             color: lighten(var(--text-color), 10%);
-            text-decoration: none;
+            font-size: 16px;
+            font-weight: normal;
+            line-height: 1;
+            margin: 0;
+            padding: var(--standard-spacing);
+            text-shadow: 1px 1px 2px;
+
+            a {
+              color: lighten(var(--text-color), 10%);
+              text-decoration: none;
+            }
+
+            @media (min-width: 600px) {
+              font-size: 24px;
+              padding: calc(var(--standard-spacing) + var(--half-standard-spacing))
+                var(--standard-spacing);
+            }
+
+            text-align: right;
+
+            &:hover {
+              background-color: white;
+            }
           }
 
-          @media (min-width: 600px) {
-            font-size: 24px;
-            padding: calc(var(--standard-spacing) + var(--half-standard-spacing))
-              var(--standard-spacing);
-          }
-
-          text-align: right;
-
-          &:hover {
-            background-color: white;
-          }
-        }
-
-        &.section {
-          font-weight: bold;
-          background-color: #f0f0f0;
-          &:hover {
+          &.section {
+            font-weight: bold;
             background-color: #f0f0f0;
-          }
-        }
-
-        &.info {
-          color: gray;
-          font-size: 90%;
-          font-style: italic;
-
-          &:hover {
-            background-color: white;
+            &:hover {
+              background-color: #f0f0f0;
+            }
           }
 
-          > * {
-            flex-direction: column;
-            align-items: flex-start;
-            line-height: 1.25;
+          &.info {
+            color: gray;
+            font-size: 90%;
+            font-style: italic;
+
+            &:hover {
+              background-color: white;
+            }
+
             > * {
-              margin: 0 0 var(--standard-spacing) 0;
-              &:last-child {
-                margin-bottom: 0;
+              flex-direction: column;
+              align-items: flex-start;
+              line-height: 1.25;
+              > * {
+                margin: 0 0 var(--standard-spacing) 0;
+                &:last-child {
+                  margin-bottom: 0;
+                }
               }
             }
           }
@@ -168,6 +177,8 @@ class MenuElement extends LitElement {
       }
     `,
   ];
+
+  @property() public map: MapService;
 
   @state() private open: boolean = false;
 
@@ -179,16 +190,29 @@ class MenuElement extends LitElement {
     this.open = false;
   }
 
+  makeSetBaseLayerHandler(layer: number) {
+    return (event: Event) => {
+      event.preventDefault();
+      this.setBaseLayer(layer);
+    };
+  }
+
+  setBaseLayer(layer: number) {
+    this.map.setBaseLayer(layer);
+    this.close();
+  }
+
   render() {
     return html`
       <div id="main-menu" class="${this.open ? "open" : "closed"}">
-        <button type="button" class="icon-button" @click=${this.toggle}>
+        <button type="button" class="icon-button" @click="${this.toggle}">
           <i class="bi bi-${this.open ? "x" : "list"}"></i>
         </button>
 
         ${this.open
           ? html`
-              <div id="backdrop" @click=${this.close}></div>
+              <div id="backdrop" @click="${this.close}"></div>
+
               <ul>
                 <li class="title">MyStops</li>
 
@@ -196,7 +220,23 @@ class MenuElement extends LitElement {
                   <span>Map Layers</span>
                 </li>
 
-                <!-- TODO: Layers -->
+                ${this.map.getBaseLayers().map((layer, i) => {
+                  const icon = html`<i class="bi bi-map"></i>`;
+                  const label = html`<span>${layer.get("label")}</span>`;
+
+                  return html`
+                    <li>
+                      ${i === this.map.baseLayer
+                        ? html`<div>${icon}${label}</div>`
+                        : html`<button
+                            type="button"
+                            @click="${this.makeSetBaseLayerHandler(i)}"
+                          >
+                            ${icon}${label}
+                          </button>`}
+                    </li>
+                  `;
+                })}
 
                 <li class="section">
                   <span>Links</span>

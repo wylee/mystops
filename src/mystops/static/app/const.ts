@@ -1,10 +1,10 @@
-// import { fromLonLat, get as getProjection, Projection } from "ol/proj";
+import { fromLonLat, get as getProjection, Projection } from "ol/proj";
 
 export const DEBUG = true;
 export const ARRIVALS_URL = `/arrivals`;
 export const REFRESH_INTERVAL = 30 * 1000; // 30 seconds
 
-// export const INITIAL_CENTER = fromLonLat([-122.667418, 45.523029]);
+export const INITIAL_CENTER = fromLonLat([-122.667418, 45.523029]);
 export const INITIAL_ZOOM = 13;
 export const MIN_ZOOM = 8;
 export const MAX_ZOOM = 20;
@@ -16,8 +16,8 @@ export const BASE_LAYER_LABELS = [
   "Satellite",
   "OpenStreetMap",
 ];
-// export const GEOGRAPHIC_PROJECTION = getProjection("EPSG:4326");
-// export const NATIVE_PROJECTION = getProjection("EPSG:3857");
+export const GEOGRAPHIC_PROJECTION = getProjection("EPSG:4326") as Projection;
+export const NATIVE_PROJECTION = getProjection("EPSG:3857") as Projection;
 export const USER_LOCATION_ACCURACY_THRESHOLD = 50; // meters?
 
 export const MAPBOX_WORDMARK_IMAGE_DATA =

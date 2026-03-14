@@ -1,5 +1,3 @@
-import debounce from "lodash/debounce";
-
 import OLMap from "ol/Map";
 import View from "ol/View";
 
@@ -46,7 +44,7 @@ import {
   STOP_STYLE,
   USER_LOCATION_ACCURACY_STYLE,
   USER_LOCATION_STYLE,
-} from "./map-styles";
+} from "../map-styles";
 
 type OnFeatureCallback = (
   map: MapService,
@@ -196,13 +194,16 @@ export default class MapService {
         noFeatureCallback(event);
       }
     };
-    if (debounceTime) {
-      listener = debounce(listener, debounceTime);
-    }
+    // if (debounceTime) {
+    //   listener = debounce(listener, debounceTime);
+    // }
     return this.on(type, listener);
   }
 
-  setTarget(target: string, overviewMapTarget: string): void {
+  setTarget(
+    target: string | HTMLElement,
+    overviewMapTarget: string | HTMLElement,
+  ): void {
     this.map.setTarget(target);
     this.overviewMap.setTarget(overviewMapTarget);
   }

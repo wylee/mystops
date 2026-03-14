@@ -1,7 +1,16 @@
-import { LitElement, html, css } from "lit-element";
-import { customElement } from "lit/decorators.js";
+import { css, html, LitElement } from "lit-element";
+import { customElement, property, query, state } from "lit/decorators.js";
+
 import { MAPBOX_WORDMARK_IMAGE_DATA } from "../const";
 import { getStyleSheet, iconButton } from "../style";
+import MapService from "../services/map-service";
+import "./map-context-menu";
+
+interface MenuState {
+  x: number;
+  y: number;
+  open: boolean;
+}
 
 @customElement("mystops-map")
 class MapElement extends LitElement {
@@ -125,9 +134,40 @@ class MapElement extends LitElement {
     `,
   ];
 
+  @property() public map: MapService;
+
+  @query("#map") private mapEl!: HTMLDivElement;
+  @query("#overview-map-container") private overviewMapEl!: HTMLDivElement;
+
+  @state() private menuState: MenuState = { x: 0, y: 0, open: false };
+
+  openMenu(event: any) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.menuState = { x: event.pageX, y: event.pageY, open: true };
+  }
+
+  closeMenu(event: Event) {
+    event.stopPropagation();
+    this.menuState = { x: 0, y: 0, open: false };
+  }
+
+  nextBaseLayer() {
+    this.map.nextBaseLayer();
+  }
+
+  get nextBaseLayerLabel() {
+    return this.map.getNextBaseLayer().get("shortLabel");
+  }
+
+  firstUpdated() {
+    this.map.setTarget(this.mapEl, this.overviewMapEl);
+    this.map.startTracking();
+  }
+
   render() {
     return html`
-      <div id="map">
+      <div id="map" @contextmenu="${this.openMenu.bind(this)}">
         <div id="controls-bottom-left" class="controls">
           <a id="mapbox-wordmark" href="https://www.mapbox.com/about/maps/">
             <img
@@ -137,8 +177,13 @@ class MapElement extends LitElement {
             />
           </a>
 
-          <div id="overview-map-container">
-            <!--<div class="label">{map?.getNextBaseLayer().get("shortLabel")}</div>-->
+          <div
+            id="overview-map-container"
+            aria-label="Change base map"
+            @click="${this.nextBaseLayer.bind(this)}"
+            @contextmenu="${this.closeMenu.bind(this)}"
+          >
+            <div class="label">${this.nextBaseLayerLabel}</div>
           </div>
         </div>
 
@@ -173,6 +218,11 @@ class MapElement extends LitElement {
             <i class="bi bi-zoom-in"></i>
           </button>
         </div>
+        
+        <mystops-map-context-menu
+          .map="${this.map}"
+          .state="${this.menuState}"
+        ></mystops-map-context-menu.>
       </div>
     `;
   }

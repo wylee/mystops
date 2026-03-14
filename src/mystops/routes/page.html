@@ -3,15 +3,13 @@
 {% load static %}
 
 {% block main %}
-    <mystops-menu></mystops-menu>
-    {# SEARCH COMPONENT #}
-    {# RESULT COMPONENT #}
-    {# ERROR COMPONENT #}
-    {# MAP COMPONENT #}
-    <mystops-map></mystops-map>
+    <mystops-app></mystops-app>
 {% endblock main %}⏎
 
 {% block scripts %}
     {{ super.scripts }}
+    <script>
+        window.DJANGO_MAPBOX_ACCESS_TOKEN = "{{ django_settings.MAPBOX_ACCESS_TOKEN }}";
+    </script>
     <script type="module" src="{% static "build/app.js" %}"></script>
 {% endblock scripts %}
