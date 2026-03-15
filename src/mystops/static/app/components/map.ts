@@ -161,6 +161,28 @@ class MapElement extends LitElement {
     return this.map.getNextBaseLayer().get("shortLabel");
   }
 
+  locate() {
+    const map = this.map;
+    const userLocation = map.getUserLocation();
+    if (userLocation.position) {
+      map.showUserLocation(true);
+    } else {
+      // TODO: Handle error (could not determine location)
+    }
+  }
+
+  zoomToFullExtent() {
+    this.map.setInitialCenterAndZoom();
+  }
+
+  zoomIn() {
+    this.map.zoomIn();
+  }
+
+  zoomOut() {
+    this.map.zoomOut();
+  }
+
   firstUpdated() {
     this.map.setTarget(this.mapEl, this.overviewMapEl);
     this.map.startTracking();
@@ -203,10 +225,10 @@ class MapElement extends LitElement {
         </div>
 
         <div id="controls-bottom-right" class="controls">
-          <icon-button icon="crosshair"></icon-button>
-          <icon-button icon="globe"></icon-button>
-          <icon-button icon="zoom-out"></icon-button>
-          <icon-button icon="zoom-in"></icon-button>
+          <icon-button icon="crosshair" title="Find my location" @click="${this.locate.bind(this)}"></icon-button>
+          <icon-button icon="globe" title="Zoom to full extent" @click="${this.zoomToFullExtent.bind(this)}"></icon-button>
+          <icon-button icon="zoom-in" title="Zoom in" @click="${this.zoomIn.bind(this)}"></icon-button>
+          <icon-button icon="zoom-out" title="Zoom out" @click="${this.zoomOut.bind(this)}"></icon-button>
         </div>
         
         <mystops-map-context-menu
