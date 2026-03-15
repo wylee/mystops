@@ -2,7 +2,7 @@ import { css, html, LitElement } from "lit-element";
 import { customElement, property, query, state } from "lit/decorators.js";
 
 import { MAPBOX_WORDMARK_IMAGE_DATA } from "../const";
-import { getStyleSheet, iconButton } from "../style";
+import { getStyleSheet } from "../style";
 import MapService from "../services/map-service";
 import "./map-context-menu";
 
@@ -18,7 +18,6 @@ class MapElement extends LitElement {
     getStyleSheet(document.styleSheets[0]),
     getStyleSheet(document.styleSheets[1]),
     getStyleSheet(document.styleSheets[2]),
-    iconButton,
 
     css`
       #map {
@@ -32,10 +31,11 @@ class MapElement extends LitElement {
           z-index: 1;
           display: flex;
           flex-direction: column;
+
           > * {
             border-radius: 2px;
             box-shadow: 1px 1px 2px;
-            margin: var(--quarter-standard-spacing) 0 0;
+            margin: var(--half-standard-spacing) 0 0;
           }
         }
       }
@@ -43,6 +43,7 @@ class MapElement extends LitElement {
       #controls-bottom-left {
         bottom: var(--quarter-standard-spacing);
         left: var(--quarter-standard-spacing);
+
         @media (min-width: 600px) {
           bottom: var(--half-standard-spacing);
           left: var(--half-standard-spacing);
@@ -202,21 +203,10 @@ class MapElement extends LitElement {
         </div>
 
         <div id="controls-bottom-right" class="controls">
-          <button type="button" class="icon-button">
-            <i class="bi bi-crosshair"></i>
-          </button>
-
-          <button type="button" class="icon-button">
-            <i class="bi bi-globe"></i>
-          </button>
-
-          <button type="button" class="icon-button">
-            <i class="bi bi-zoom-out"></i>
-          </button>
-
-          <button type="button" class="icon-button">
-            <i class="bi bi-zoom-in"></i>
-          </button>
+          <icon-button icon="crosshair"></icon-button>
+          <icon-button icon="globe"></icon-button>
+          <icon-button icon="zoom-out"></icon-button>
+          <icon-button icon="zoom-in"></icon-button>
         </div>
         
         <mystops-map-context-menu

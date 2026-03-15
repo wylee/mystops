@@ -2,7 +2,8 @@ import { html, LitElement } from "lit-element";
 import { customElement } from "lit/decorators.js";
 
 import MapService from "./services/map-service";
-import { getStyleSheet, iconButton } from "./style";
+import { getStyleSheet } from "./style";
+import "./components/icon-button";
 import "./components/map";
 import "./components/menu";
 
@@ -12,7 +13,6 @@ class AppElement extends LitElement {
     getStyleSheet(document.styleSheets[0]),
     getStyleSheet(document.styleSheets[1]),
     getStyleSheet(document.styleSheets[2]),
-    iconButton,
   ];
 
   private map: MapService = new MapService();

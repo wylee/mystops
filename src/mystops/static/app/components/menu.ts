@@ -1,6 +1,6 @@
 import { css, html, LitElement } from "lit-element";
 import { customElement, property, state } from "lit/decorators.js";
-import { getStyleSheet, iconButton } from "../style";
+import { getStyleSheet } from "../style";
 import MapService from "../services/map-service";
 
 @customElement("mystops-menu")
@@ -9,7 +9,6 @@ class MenuElement extends LitElement {
     getStyleSheet(document.styleSheets[0]),
     getStyleSheet(document.styleSheets[1]),
     getStyleSheet(document.styleSheets[2]),
-    iconButton,
 
     css`
       /* Container */
@@ -31,7 +30,7 @@ class MenuElement extends LitElement {
       }
 
       /* Toggle button */
-      #main-menu > button {
+      #main-menu > icon-button.toggle-button {
         position: absolute;
         top: var(--quarter-standard-spacing);
         left: var(--quarter-standard-spacing);
@@ -205,9 +204,11 @@ class MenuElement extends LitElement {
   render() {
     return html`
       <div id="main-menu" class="${this.open ? "open" : "closed"}">
-        <button type="button" class="icon-button" @click="${this.toggle}">
-          <i class="bi bi-${this.open ? "x" : "list"}"></i>
-        </button>
+        <icon-button
+          class="toggle-button"
+          icon="${this.open ? "x" : "list"}"
+          @click="${this.toggle}"
+        ></icon-button>
 
         ${this.open
           ? html`
