@@ -1,15 +1,33 @@
 import { css, html, LitElement } from "lit-element";
 import { customElement, property, query, state } from "lit/decorators.js";
+import Feature from "ol/Feature";
 
 import { MAPBOX_WORDMARK_IMAGE_DATA } from "../const";
 import { getStyleSheet } from "../style";
 import MapService from "../services/map-service";
 import "./map-context-menu";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
 
 interface MenuState {
   x: number;
   y: number;
   open: boolean;
+}
+
+interface Position {
+  top: string;
+  right: string;
+  bottom: string;
+  left: string;
+}
+
+interface StopInfo {
+  id: number;
+  name: string;
+  direction: string | null;
+  routes: Array<any>;
+  position: Position;
 }
 
 @customElement("mystops-map")
@@ -141,6 +159,7 @@ class MapElement extends LitElement {
   @query("#overview-map-container") private overviewMapEl!: HTMLDivElement;
 
   @state() private menuState: MenuState = { x: 0, y: 0, open: false };
+  @state() private stopInfo?: StopInfo;
 
   openMenu(event: any) {
     event.preventDefault();
@@ -183,9 +202,64 @@ class MapElement extends LitElement {
     this.map.zoomOut();
   }
 
+  getStopInfo(feature: Feature, pixel: number[]): StopInfo {
+    const map = this.map;
+    const [width, height] = map.getSize();
+    const [x, y] = [width / 2, height / 2];
+    const buffer = 10;
+    const properties = feature.getProperties();
+
+    let left: any = pixel[0];
+    let top: any = pixel[1];
+    let right: any = "auto";
+    let bottom: any = "auto";
+
+    if (left > x) {
+      [left, right] = ["auto", width - left];
+    }
+
+    if (top > y) {
+      [top, bottom] = ["auto", height - top];
+    }
+
+    [top, right, bottom, left] = [top, right, bottom, left].map((value) => {
+      return value === "auto" ? value : `${value + buffer}px`;
+    });
+
+    return {
+      id: properties.id,
+      name: properties.name,
+      direction: properties.direction || "N/A",
+      routes: properties.routes || "N/A",
+      position: { top, right, bottom, left },
+    };
+
+  }
+
   firstUpdated() {
-    this.map.setTarget(this.mapEl, this.overviewMapEl);
-    this.map.startTracking();
+    const map = this.map;
+    const stopsLayer = map.getLayer("Stops") as VectorLayer<VectorSource>;
+
+    map.setTarget(this.mapEl, this.overviewMapEl);
+    map.startTracking();
+
+    map.onFeature(
+      "click",
+      (map, feature) => {
+        console.log({ type: "TOGGLE_STOP", payload: feature.get("id") });
+        console.log({ type: "DO_ARRIVALS_QUERY", payload: true });
+      },
+      () => console.log({ type: "RESET" }),
+      stopsLayer,
+    );
+
+    map.onFeature(
+      "pointermove",
+      (map, feature, px) => this.stopInfo = this.getStopInfo(map, feature, px)),
+      () => this.stopInfo = undefined,
+      map.getLayer("Stops"),
+      10,
+    );
   }
 
   render() {
