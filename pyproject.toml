@@ -6,30 +6,30 @@ build-backend = "uv_build"
 name = "mystops"
 version = "3.0.0.dev0"
 description = "MyStops - TriMet arrivals on a map"
-authors = [ { name = "Wyatt Baldwin", email = "code@wyattbaldwin.com" } ]
+authors = [{ name = "Wyatt Baldwin", email = "code@wyattbaldwin.com" }]
 license = { text = "private" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "org-djangokit-core>=0.0.5.dev0",
     "org-djangokit-cli>=0.0.8.dev0",
-    "Django>=6.0.2",
-    "markdown>=3.10.1",
+    "Django>=6.0.3",
+    "markdown>=3.10.2",
     "mercantile>=1.2.1",
-    "psycopg>=3.3.2",
+    "psycopg>=3.3.3",
     "pydantic>=2.12.5",
     "pymemcache>=4.0.0",
-    "requests>=2.32.5",
+    "requests>=2.33.0",
     "runcommands>=1.0a73",
     "tzlocal>=5.3.1",
 ]
 
 [dependency-groups]
 dev = [
-    "ansible>=13.3.0",
+    "ansible>=13.5.0",
     "mypy>=1.19.1",
     "pytest>=9.0.2",
-    "ruff>=0.15.1",
+    "ruff>=0.15.8",
 ]
 
 [tool.uv.sources]
@@ -48,6 +48,6 @@ ignore = ["E731"]
 env = "development"
 
 [tool.runcommands.envs]
-development = {}
+development = { }
 production.host = "app-1.wyattbaldwin.com"
 production.public_hostname = "mystops.io"
