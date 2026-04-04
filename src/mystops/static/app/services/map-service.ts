@@ -292,8 +292,8 @@ export default class MapService {
     return containsExtent(this.getExtent(), extent);
   }
 
-  extentOf(items: { coordinates: number[] }[], transform = false): Extent {
-    const extent = boundingExtent(items.map((stop: any) => stop.coordinates));
+  extentOf(coordinates: number[][], transform = false): Extent {
+    const extent = boundingExtent(coordinates);
     if (transform) {
       return transformExtent(extent, GEOGRAPHIC_PROJECTION, NATIVE_PROJECTION);
     }

@@ -1,3 +1,4 @@
+import { PropertyValues } from "lit";
 import { css, html, LitElement } from "lit-element";
 import { customElement, property, query, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
@@ -8,7 +9,7 @@ import VectorSource from "ol/source/Vector";
 
 import { getStyleSheet } from "../style";
 
-import { MAPBOX_WORDMARK_IMAGE_DATA } from "../const";
+import { MAPBOX_WORDMARK_IMAGE_DATA, STREET_LEVEL_ZOOM } from "../const";
 import { appStateContext } from "../context";
 import { AppState } from "../interfaces";
 
@@ -16,6 +17,7 @@ import ArrivalsService from "../services/arrivals-service";
 import MapService from "../services/map-service";
 
 import "./map-context-menu";
+import { STOP_STYLE_SELECTED } from "../map-styles";
 
 interface MenuState {
   x: number;
@@ -161,7 +163,7 @@ class MapElement extends LitElement {
     `,
   ];
 
-  @consume({ context: appStateContext })
+  @consume({ context: appStateContext, subscribe: true })
   @property({ attribute: false })
   public appState?: AppState;
 
@@ -248,10 +250,19 @@ class MapElement extends LitElement {
     };
   }
 
-  firstUpdated() {
+  getStopsLayer(): VectorLayer<VectorSource> {
+    return this.map.getLayer("Stops") as VectorLayer<VectorSource>;
+  }
+
+  getStopsSource(): VectorSource {
+    return this.getStopsLayer().getSource() as VectorSource;
+  }
+
+  firstUpdated(changed: PropertyValues) {
+    super.firstUpdated(changed);
+
     const map = this.map;
-    const stopsLayer = map.getLayer("Stops") as VectorLayer<VectorSource>;
-    const stopsSource = stopsLayer.getSource() as VectorSource;
+    const stopsLayer = this.getStopsLayer();
 
     map.setTarget(this.mapEl, this.overviewMapEl);
     map.startTracking();
@@ -259,10 +270,27 @@ class MapElement extends LitElement {
     map.onFeature(
       "click",
       (_map, feature) => {
-        console.log({ type: "TOGGLE_STOP", payload: feature.get("id") });
-        console.log({ type: "DO_ARRIVALS_QUERY", payload: true });
+        this.dispatchEvent(
+          new CustomEvent("toggle-stop", {
+            bubbles: true,
+            composed: true,
+            detail: { feature },
+          }),
+        );
+        this.dispatchEvent(
+          new CustomEvent("do-arrivals-query", {
+            bubbles: true,
+            composed: true,
+          }),
+        );
       },
-      () => console.log({ type: "RESET" }),
+      () =>
+        this.dispatchEvent(
+          new CustomEvent("reset", {
+            bubbles: true,
+            composed: true,
+          }),
+        ),
       stopsLayer,
     );
 
@@ -320,6 +348,42 @@ class MapElement extends LitElement {
       },
       /*once */ true,
     );
+  }
+
+  protected update(changed: PropertyValues) {
+    super.update(changed);
+
+    const map = this.map;
+    const stopsSource = this.getStopsSource();
+    const selectedStops = this.appState?.selectedStops;
+    const deselectedStops = this.appState?.deselectedStops;
+
+    if (deselectedStops?.length) {
+      deselectedStops.forEach((stop: any) => {
+        const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
+        if (feature) {
+          feature.setStyle(undefined);
+        }
+      });
+    }
+
+    if (selectedStops?.length) {
+      const coordinates = selectedStops.map((stop) => stop.coordinates);
+      const newExtent = map.extentOf(coordinates, true);
+      const setStyle = () => {
+        selectedStops.forEach((stop: any) => {
+          const feature = stopsSource.getFeatureById(`stop.${stop.id}`);
+          if (feature) {
+            feature.setStyle(STOP_STYLE_SELECTED);
+          }
+        });
+      };
+      if (!map.containsExtent(newExtent) || map.getZoom() < STREET_LEVEL_ZOOM) {
+        map.setExtent(newExtent, () => map.once("rendercomplete", setStyle));
+      } else {
+        setStyle();
+      }
+    }
   }
 
   render() {
