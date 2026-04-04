@@ -1,8 +1,15 @@
 import { html, LitElement } from "lit-element";
 import { customElement } from "lit/decorators.js";
+import { provide } from "@lit/context";
 
-import MapService from "./services/map-service";
 import { getStyleSheet } from "./style";
+
+import { appStateContext } from "./context";
+import { AppState } from "./interfaces";
+
+import ArrivalsService from "./services/arrivals-service";
+import MapService from "./services/map-service";
+
 import "./components/icon-button";
 import "./components/map";
 import "./components/menu";
@@ -15,7 +22,11 @@ class AppElement extends LitElement {
     getStyleSheet(document.styleSheets[2]),
   ];
 
+  private arrivals: ArrivalsService = new ArrivalsService();
   private map: MapService = new MapService();
+
+  @provide({ context: appStateContext })
+  public appState: AppState = {};
 
   render() {
     return html`
@@ -23,8 +34,7 @@ class AppElement extends LitElement {
       <!-- SEARCH COMPONENT -->
       <!-- RESULT COMPONENT -->
       <!-- ERROR COMPONENT -->
-      <!-- MAP COMPONENT -->
-      <mystops-map .map="${this.map}"></mystops-map>
+      <mystops-map .arrivals="${this.arrivals}" .map="${this.map}"></mystops-map>
     `;
   }
 }

@@ -1,13 +1,21 @@
 import { css, html, LitElement } from "lit-element";
 import { customElement, property, query, state } from "lit/decorators.js";
-import Feature from "ol/Feature";
+import { consume } from "@lit/context";
 
-import { MAPBOX_WORDMARK_IMAGE_DATA } from "../const";
-import { getStyleSheet } from "../style";
-import MapService from "../services/map-service";
-import "./map-context-menu";
+import Feature from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
+
+import { getStyleSheet } from "../style";
+
+import { MAPBOX_WORDMARK_IMAGE_DATA } from "../const";
+import { appStateContext } from "../context";
+import { AppState } from "../interfaces";
+
+import ArrivalsService from "../services/arrivals-service";
+import MapService from "../services/map-service";
+
+import "./map-context-menu";
 
 interface MenuState {
   x: number;
@@ -153,6 +161,11 @@ class MapElement extends LitElement {
     `,
   ];
 
+  @consume({ context: appStateContext })
+  @property({ attribute: false })
+  public appState?: AppState;
+
+  @property() public arrivals: ArrivalsService;
   @property() public map: MapService;
 
   @query("#map") private mapEl!: HTMLDivElement;
@@ -233,19 +246,19 @@ class MapElement extends LitElement {
       routes: properties.routes || "N/A",
       position: { top, right, bottom, left },
     };
-
   }
 
   firstUpdated() {
     const map = this.map;
     const stopsLayer = map.getLayer("Stops") as VectorLayer<VectorSource>;
+    const stopsSource = stopsLayer.getSource() as VectorSource;
 
     map.setTarget(this.mapEl, this.overviewMapEl);
     map.startTracking();
 
     map.onFeature(
       "click",
-      (map, feature) => {
+      (_map, feature) => {
         console.log({ type: "TOGGLE_STOP", payload: feature.get("id") });
         console.log({ type: "DO_ARRIVALS_QUERY", payload: true });
       },
@@ -255,10 +268,57 @@ class MapElement extends LitElement {
 
     map.onFeature(
       "pointermove",
-      (map, feature, px) => this.stopInfo = this.getStopInfo(map, feature, px)),
-      () => this.stopInfo = undefined,
-      map.getLayer("Stops"),
+      (_map, feature, px) => (this.stopInfo = this.getStopInfo(feature, px)),
+      () => (this.stopInfo = undefined),
+      stopsLayer,
       10,
+    );
+
+    map.on("contextmenu", () => (this.stopInfo = undefined));
+
+    // Initial zoom to user location.
+    map.addGeolocatorListener(
+      "change",
+      () => map.showUserLocation(/* zoomTo */ true),
+      /* once */ true,
+    );
+
+    map.addGeolocatorListener(
+      "error",
+      (error) => {
+        let explanation: string;
+        let detail: string | undefined;
+
+        switch (error.code) {
+          case 1: // GeolocationPositionError.PERMISSION_DENIED
+            explanation =
+              "Access to location services have been disabled for this site.";
+            detail = "Check your browser location settings and try again.";
+            break;
+          case 3: // GeolocationPositionError.TIMEOUT
+            // NOTE: If a position has been set, then presumably there's
+            //       not actually a timeout error. I think this only
+            //       happens on desktop because there's no sensor and
+            //       therefore tracking isn't possible.
+            if (map.getUserLocation().position) {
+              return;
+            }
+            explanation = "Could not find your location after 30 seconds.";
+            break;
+          default: // GeolocationPositionError.POSITION_UNAVAILABLE (or other)
+            explanation = "Could not determine your location.";
+        }
+
+        console.log({
+          type: "SET_ERROR",
+          payload: {
+            title: "Location Error",
+            explanation,
+            detail,
+          },
+        });
+      },
+      /*once */ true,
     );
   }
 
