@@ -179,8 +179,12 @@ main {
     border: 1px solid white;
     border-radius: 1px;
 
-    font-size: 16px;
+    font-size: 20px;
     line-height: 1;
+
+    > .bi {
+        font-weight: bold;
+    }
 
     &:hover {
         border: 1px solid #f0f0f0;

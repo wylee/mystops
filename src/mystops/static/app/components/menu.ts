@@ -204,7 +204,12 @@ class MenuElement extends MyStopsElement {
   render() {
     return html`
       <div id="main-menu" class="${this.open ? "open" : "closed"}">
-        <button type="button" class="icon-button toggle-button" @click="${this.toggle}">
+        <button
+          type="button"
+          class="icon-button toggle-button"
+          title="${this.open ? "Close menu" : "Open menu"}"
+          @click="${this.toggle}"
+        >
           <i class="bi bi-${this.open ? "x-lg" : "list"}"></i>
         </button>
 
