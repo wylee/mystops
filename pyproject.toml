@@ -20,7 +20,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "pymemcache>=4.0.0",
     "requests>=2.33.0",
-    "runcommands>=1.0a73",
+    "runcommands>=1.0a74.dev0",
     "tzlocal>=5.3.1",
 ]
 
@@ -35,6 +35,7 @@ dev = [
 [tool.uv.sources]
 org-djangokit-core = { path = "../djangokit/core", editable = true }
 org-djangokit-cli = { path = "../djangokit/cli", editable = true }
+runcommands = { path = "../runcommands", editable = true }
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
