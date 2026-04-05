@@ -1,7 +1,15 @@
 export interface AppState {
   selectedStops: Stop[];
   deselectedStops: Stop[];
-  term?: string;
+  term: string;
+  result?: Result;
+  error?: Error;
+}
+
+export interface Result {
+  count: number;
+  updateTime: string;
+  stops: Stop[];
 }
 
 export interface Stop {
@@ -34,4 +42,27 @@ export interface Error {
   title: string;
   explanation: string;
   detail?: string;
+}
+
+// Map -----------------------------------------------------------------
+
+export interface ContextMenuState {
+  x: number;
+  y: number;
+  open: boolean;
+}
+
+export interface StopInfo {
+  id: number;
+  name: string;
+  direction: string | null;
+  routes: Array<any>;
+  position: Position;
+}
+
+export interface Position {
+  top: string;
+  right: string;
+  bottom: string;
+  left: string;
 }

@@ -1,10 +1,8 @@
-import { html, LitElement } from "lit-element";
+import { html } from "lit-element";
 import { customElement } from "lit/decorators.js";
 import { provide } from "@lit/context";
 
 import { transform } from "ol/proj";
-
-import { getStyleSheet } from "./style";
 
 import { GEOGRAPHIC_PROJECTION, NATIVE_PROJECTION } from "./const";
 import { appStateContext } from "./context";
@@ -13,51 +11,68 @@ import { AppState } from "./interfaces";
 import ArrivalsService from "./services/arrivals-service";
 import MapService from "./services/map-service";
 
-import "./components/icon-button";
+import MyStopsElement from "./element";
+
 import "./components/map";
 import "./components/menu";
+import "./components/result";
+import "./components/search";
 
 @customElement("mystops-app")
-class AppElement extends LitElement {
-  static styles = [
-    getStyleSheet(document.styleSheets[0]),
-    getStyleSheet(document.styleSheets[1]),
-    getStyleSheet(document.styleSheets[2]),
-  ];
-
-  private arrivals: ArrivalsService = new ArrivalsService();
+class AppElement extends MyStopsElement {
+  private arrivals: ArrivalsService = new ArrivalsService(this);
   private map: MapService = new MapService();
 
   @provide({ context: appStateContext })
   public appState: AppState = {
     selectedStops: [],
     deselectedStops: [],
-    term: undefined,
+    term: "",
+    result: undefined,
   };
 
-  connectedCallback() {
-    super.connectedCallback();
+  constructor() {
+    super();
 
-    const shadowRoot = this.shadowRoot;
-    if (!shadowRoot) {
-      return;
-    }
+    this.addEventListener("set-term", (event: CustomEvent) => {
+      const oldTerm = this.appState.term;
+      const newTerm = event.detail.trim();
+      if (newTerm !== oldTerm) {
+        this.appState = { ...this.appState, term: newTerm };
+      }
+    });
 
-    shadowRoot.addEventListener("reset", () => {
+    this.addEventListener("query-arrivals", (event: CustomEvent) => {
+      console.log("query-arrivals");
+      this.arrivals.start(this.appState.term);
+    });
+
+    this.addEventListener("set-result", (event: CustomEvent) => {
+      this.appState = { ...this.appState, result: event.detail };
+    });
+
+    this.addEventListener("set-error", (event: CustomEvent) => {
+      this.appState = { ...this.appState, result: event.detail, error: event.detail };
+    });
+
+    this.addEventListener("reset", () => {
       this.appState = {
         ...this.appState,
         selectedStops: [],
         deselectedStops: this.appState.selectedStops,
-        term: undefined,
+        term: "",
+        result: undefined,
+        error: undefined,
       };
+      this.arrivals.reset();
+      this.map.reset();
     });
 
-    shadowRoot.addEventListener("toggle-stop", (event: CustomEvent) => {
-      console.log(event);
+    this.addEventListener("toggle-stop", (event: CustomEvent) => {
       const selectedStops = this.appState.selectedStops;
       const deselectedStops = this.appState.deselectedStops;
 
-      const feature = event.detail.feature;
+      const feature = event.detail;
       const stopId = feature.get("id");
       const geom = feature.getGeometry();
       const coordinates = transform(
@@ -78,21 +93,21 @@ class AppElement extends LitElement {
       selectedStops.sort((a, b) => a.id - b.id);
       deselectedStops.sort((a, b) => a.id - b.id);
 
-      const term = selectedStops.length
-        ? selectedStops.map((stop) => stop.id).join(", ")
-        : undefined;
+      const term = selectedStops.map((stop) => stop.id).join(", ");
 
-      this.appState = { ...this.appState, selectedStops, deselectedStops, term };
+      this.appState = { ...this.appState, selectedStops, deselectedStops };
+      this.dispatch("set-term", term);
+      this.dispatch("query-arrivals");
     });
   }
 
   render() {
     return html`
       <mystops-menu .map="${this.map}"></mystops-menu>
-      <!-- SEARCH COMPONENT -->
-      <!-- RESULT COMPONENT -->
+      <mystops-search></mystops-search>
+      <mystops-result></mystops-result>
       <!-- ERROR COMPONENT -->
-      <mystops-map .arrivals="${this.arrivals}" .map="${this.map}"></mystops-map>
+      <mystops-map .map="${this.map}"></mystops-map>
     `;
   }
 }

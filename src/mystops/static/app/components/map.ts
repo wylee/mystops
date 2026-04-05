@@ -1,179 +1,153 @@
 import { PropertyValues } from "lit";
-import { css, html, LitElement } from "lit-element";
+import { css, html } from "lit-element";
 import { customElement, property, query, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
 
 import Feature from "ol/Feature";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-
-import { getStyleSheet } from "../style";
 
 import { MAPBOX_WORDMARK_IMAGE_DATA, STREET_LEVEL_ZOOM } from "../const";
 import { appStateContext } from "../context";
-import { AppState } from "../interfaces";
-
-import ArrivalsService from "../services/arrivals-service";
-import MapService from "../services/map-service";
-
-import "./map-context-menu";
+import { AppState, ContextMenuState, StopInfo } from "../interfaces";
 import { STOP_STYLE_SELECTED } from "../map-styles";
 
-interface MenuState {
-  x: number;
-  y: number;
-  open: boolean;
-}
+import MapService from "../services/map-service";
 
-interface Position {
-  top: string;
-  right: string;
-  bottom: string;
-  left: string;
-}
-
-interface StopInfo {
-  id: number;
-  name: string;
-  direction: string | null;
-  routes: Array<any>;
-  position: Position;
-}
+import MyStopsElement from "../element";
+import "./map-context-menu";
 
 @customElement("mystops-map")
-class MapElement extends LitElement {
-  static styles = [
-    getStyleSheet(document.styleSheets[0]),
-    getStyleSheet(document.styleSheets[1]),
-    getStyleSheet(document.styleSheets[2]),
+class MapElement extends MyStopsElement {
+  static get styles() {
+    return [
+      MyStopsElement.styles,
 
-    css`
-      #map {
-        width: 100%;
-        height: 100%;
-        user-select: none;
-        background-color: #c6d7e3;
+      css`
+        #map {
+          width: 100%;
+          height: 100%;
+          user-select: none;
+          background-color: #c6d7e3;
 
-        > .controls {
-          position: absolute;
-          z-index: 1;
-          display: flex;
-          flex-direction: column;
+          > .controls {
+            position: absolute;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
 
-          > * {
-            border-radius: 2px;
-            box-shadow: 1px 1px 2px;
-            margin: var(--half-standard-spacing) 0 0;
+            > * {
+              border-radius: 2px;
+              box-shadow: 1px 1px 2px;
+              margin: var(--half-standard-spacing) 0 0;
+            }
           }
         }
-      }
 
-      #controls-bottom-left {
-        bottom: var(--quarter-standard-spacing);
-        left: var(--quarter-standard-spacing);
-
-        @media (min-width: 600px) {
-          bottom: var(--half-standard-spacing);
-          left: var(--half-standard-spacing);
-        }
-
-        #mapbox-wordmark {
-          display: flex;
-          align-items: center;
-          box-shadow: none;
-          padding: var(--quarter-standard-spacing);
-        }
-
-        #overview-map-container {
-          display: none;
-          width: 128px;
-          height: 128px;
-          z-index: 1;
-          background-color: white;
-          border: 1px solid #f0f0f0;
-          border-radius: 2px;
-          box-shadow: 1px 1px 2px;
-          cursor: pointer;
+        #controls-bottom-left {
+          bottom: var(--quarter-standard-spacing);
+          left: var(--quarter-standard-spacing);
 
           @media (min-width: 600px) {
-            display: block;
+            bottom: var(--half-standard-spacing);
+            left: var(--half-standard-spacing);
           }
 
-          > .label {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 1;
-            padding: var(--quarter-standard-spacing) 0;
-            background-color: rgba(255, 255, 255, 0.75);
-            font-weight: bold;
-            line-height: 1;
-            text-align: center;
+          #mapbox-wordmark {
+            display: flex;
+            align-items: center;
+            box-shadow: none;
+            padding: var(--quarter-standard-spacing);
           }
-        }
-      }
 
-      #controls-bottom-right {
-        bottom: var(--quarter-standard-spacing);
-        right: var(--quarter-standard-spacing);
-        @media (min-width: 600px) {
-          bottom: var(--half-standard-spacing);
-          right: var(--half-standard-spacing);
-          .base-layer-control {
+          #overview-map-container {
             display: none;
-          }
-        }
-      }
+            width: 128px;
+            height: 128px;
+            z-index: 1;
+            background-color: white;
+            border: 1px solid #f0f0f0;
+            border-radius: 2px;
+            box-shadow: 1px 1px 2px;
+            cursor: pointer;
 
-      #attributions {
-        position: absolute;
-        z-index: 1;
-        bottom: var(--half-standard-spacing);
-        right: calc(var(--half-standard-spacing) + 40px);
+            @media (min-width: 600px) {
+              display: block;
+            }
 
-        display: none;
-        flex-direction: row;
-        align-items: center;
-
-        background-color: white;
-        border-radius: 2px;
-        box-shadow: 1px 1px 2px;
-
-        line-height: 1;
-        padding: var(--half-standard-spacing) var(--quarter-standard-spacing);
-        white-space: nowrap;
-
-        .mapbox-improve a {
-          font-weight: bold;
-        }
-
-        > div {
-          display: inline-block;
-          margin-right: var(--quarter-standard-spacing);
-          &:last-child {
-            margin-right: 0;
+            > .label {
+              position: absolute;
+              right: 0;
+              bottom: 0;
+              left: 0;
+              z-index: 1;
+              padding: var(--quarter-standard-spacing) 0;
+              background-color: rgba(255, 255, 255, 0.75);
+              font-weight: bold;
+              line-height: 1;
+              text-align: center;
+            }
           }
         }
 
-        @media (min-width: 600px) {
-          display: flex;
+        #controls-bottom-right {
+          bottom: var(--quarter-standard-spacing);
+          right: var(--quarter-standard-spacing);
+          @media (min-width: 600px) {
+            bottom: var(--half-standard-spacing);
+            right: var(--half-standard-spacing);
+            .base-layer-control {
+              display: none;
+            }
+          }
         }
-      }
-    `,
-  ];
+
+        #attributions {
+          position: absolute;
+          z-index: 1;
+          bottom: var(--half-standard-spacing);
+          right: calc(var(--half-standard-spacing) + 40px);
+
+          display: none;
+          flex-direction: row;
+          align-items: center;
+
+          background-color: white;
+          border-radius: 2px;
+          box-shadow: 1px 1px 2px;
+
+          line-height: 1;
+          padding: var(--half-standard-spacing) var(--quarter-standard-spacing);
+          white-space: nowrap;
+
+          .mapbox-improve a {
+            font-weight: bold;
+          }
+
+          > div {
+            display: inline-block;
+            margin-right: var(--quarter-standard-spacing);
+            &:last-child {
+              margin-right: 0;
+            }
+          }
+
+          @media (min-width: 600px) {
+            display: flex;
+          }
+        }
+      `,
+    ];
+  }
 
   @consume({ context: appStateContext, subscribe: true })
   @property({ attribute: false })
-  public appState?: AppState;
+  appState?: AppState;
 
-  @property() public arrivals: ArrivalsService;
-  @property() public map: MapService;
+  @property() map: MapService;
 
   @query("#map") private mapEl!: HTMLDivElement;
   @query("#overview-map-container") private overviewMapEl!: HTMLDivElement;
 
-  @state() private menuState: MenuState = { x: 0, y: 0, open: false };
+  @state() private menuState: ContextMenuState = { x: 0, y: 0, open: false };
   @state() private stopInfo?: StopInfo;
 
   openMenu(event: any) {
@@ -250,55 +224,26 @@ class MapElement extends LitElement {
     };
   }
 
-  getStopsLayer(): VectorLayer<VectorSource> {
-    return this.map.getLayer("Stops") as VectorLayer<VectorSource>;
-  }
-
-  getStopsSource(): VectorSource {
-    return this.getStopsLayer().getSource() as VectorSource;
-  }
-
   firstUpdated(changed: PropertyValues) {
     super.firstUpdated(changed);
 
     const map = this.map;
-    const stopsLayer = this.getStopsLayer();
 
     map.setTarget(this.mapEl, this.overviewMapEl);
     map.startTracking();
 
     map.onFeature(
       "click",
-      (_map, feature) => {
-        this.dispatchEvent(
-          new CustomEvent("toggle-stop", {
-            bubbles: true,
-            composed: true,
-            detail: { feature },
-          }),
-        );
-        this.dispatchEvent(
-          new CustomEvent("do-arrivals-query", {
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      },
-      () =>
-        this.dispatchEvent(
-          new CustomEvent("reset", {
-            bubbles: true,
-            composed: true,
-          }),
-        ),
-      stopsLayer,
+      (_, feature) => this.dispatch("toggle-stop", feature),
+      () => this.dispatch("reset"),
+      map.stopsLayer,
     );
 
     map.onFeature(
       "pointermove",
-      (_map, feature, px) => (this.stopInfo = this.getStopInfo(feature, px)),
+      (_, feature, px) => (this.stopInfo = this.getStopInfo(feature, px)),
       () => (this.stopInfo = undefined),
-      stopsLayer,
+      map.stopsLayer,
       10,
     );
 
@@ -354,7 +299,7 @@ class MapElement extends LitElement {
     super.update(changed);
 
     const map = this.map;
-    const stopsSource = this.getStopsSource();
+    const stopsSource = map.stopsSource;
     const selectedStops = this.appState?.selectedStops;
     const deselectedStops = this.appState?.deselectedStops;
 
@@ -388,7 +333,10 @@ class MapElement extends LitElement {
 
   render() {
     return html`
-      <div id="map" @contextmenu="${this.openMenu.bind(this)}">
+      <div id="map"
+           @click="${this.closeMenu.bind(this)}"
+           @contextmenu="${this.openMenu.bind(this)}">
+        
         <div id="controls-bottom-left" class="controls">
           <a id="mapbox-wordmark" href="https://www.mapbox.com/about/maps/">
             <img
@@ -408,7 +356,7 @@ class MapElement extends LitElement {
           </div>
         </div>
 
-        <div id="attributions">
+        <div id="attributions" @contextmenu="${this.closeMenu.bind(this)}">
           <div class="mapbox-copyright">
             © <a href="https://www.mapbox.com/about/maps/">Mapbox</a>
           </div>
@@ -422,16 +370,25 @@ class MapElement extends LitElement {
           </div>
         </div>
 
-        <div id="controls-bottom-right" class="controls">
-          <icon-button icon="crosshair" title="Find my location" @click="${this.locate.bind(this)}"></icon-button>
-          <icon-button icon="globe" title="Zoom to full extent" @click="${this.zoomToFullExtent.bind(this)}"></icon-button>
-          <icon-button icon="zoom-in" title="Zoom in" @click="${this.zoomIn.bind(this)}"></icon-button>
-          <icon-button icon="zoom-out" title="Zoom out" @click="${this.zoomOut.bind(this)}"></icon-button>
+        <div id="controls-bottom-right" class="controls" @contextmenu="${this.closeMenu.bind(this)}">
+          <button type="button" class="icon-button" title="Find my location" @click="${this.locate.bind(this)}">
+            <i class="bi bi-crosshair"></i>
+          </button>
+          <button type="button" class="icon-button" title="Zoom to full extent" @click="${this.zoomToFullExtent.bind(this)}">
+            <i class="bi bi-globe"></i>
+          </button>
+          <button type="button" class="icon-button" title="Zoom in" @click="${this.zoomIn.bind(this)}">
+            <i class="bi bi-zoom-in"></i>
+          </button>
+          <button type="button" class="icon-button" title="Zoom out" @click="${this.zoomOut.bind(this)}">
+            <i class="bi bi-zoom-out"></i>
+          </button>
         </div>
         
         <mystops-map-context-menu
           .map="${this.map}"
           .state="${this.menuState}"
+          @contextmenu="${(event: Event) => event.stopPropagation()}"
         ></mystops-map-context-menu.>
       </div>
     `;

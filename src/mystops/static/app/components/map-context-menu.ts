@@ -1,8 +1,9 @@
-import { css, html, LitElement } from "lit-element";
+import { css, html } from "lit-element";
 import { customElement, property } from "lit/decorators.js";
 
 import { STREET_LEVEL_ZOOM } from "../const";
 import MapService from "../services/map-service";
+import MyStopsElement from "../element";
 
 interface State {
   x: number;
@@ -11,34 +12,38 @@ interface State {
 }
 
 @customElement("mystops-map-context-menu")
-class MapContextMenuElement extends LitElement {
-  static styles = [
-    css`
-      ul {
-        position: absolute;
-        z-index: 13;
+class MapContextMenuElement extends MyStopsElement {
+  static get styles() {
+    return [
+      MyStopsElement.styles,
 
-        margin: 0;
-        padding: 0;
+      css`
+        ul {
+          position: absolute;
+          z-index: 13;
 
-        animation: fade-in 0.5s;
-        background-color: white;
-        border-radius: 2px;
-        box-shadow: 2px 2px 4px;
-        list-style: none;
+          margin: 0;
+          padding: 0;
 
-        & > li {
-          padding: var(--half-standard-spacing);
+          animation: fade-in 0.5s;
+          background-color: white;
+          border-radius: 2px;
+          box-shadow: 2px 2px 4px;
+          list-style: none;
 
-          &:hover {
-            background-color: #f8f8f8;
-            color: var(--link-color-hover);
-            cursor: pointer;
+          & > li {
+            padding: var(--half-standard-spacing);
+
+            &:hover {
+              background-color: #f8f8f8;
+              color: var(--link-color-hover);
+              cursor: pointer;
+            }
           }
         }
-      }
-    `,
-  ];
+      `,
+    ];
+  }
 
   @property() public map: MapService;
   @property() public state: State;

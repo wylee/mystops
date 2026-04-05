@@ -1,3 +1,5 @@
+import { debounce } from "lodash";
+
 import OLMap from "ol/Map";
 import View from "ol/View";
 
@@ -69,7 +71,8 @@ export default class MapService {
   private readonly layers: BaseLayer[];
   private readonly baseLayers: TileLayer<TileSource>[];
   public baseLayer = 0;
-  private readonly stopsLayer: VectorLayer<VectorSource>;
+  public readonly stopsLayer: VectorLayer<VectorSource>;
+  public readonly stopsSource: VectorSource;
   private readonly userLocationLayer: VectorLayer<VectorSource>;
   private listenerKeys: EventsKey[] = [];
   private readonly overviewMap: OLMap;
@@ -105,6 +108,8 @@ export default class MapService {
       visible: true,
       style: STOP_STYLE,
     });
+
+    this.stopsSource = this.stopsLayer.getSource() as VectorSource;
 
     this.userLocationLayer = new VectorLayer({
       visible: false,
@@ -157,6 +162,12 @@ export default class MapService {
     });
   }
 
+  reset() {
+    this.stopsSource.getFeatures().forEach((feature) => {
+      feature.setStyle(undefined);
+    });
+  }
+
   on(type: string, listener: (event: BaseEvent) => unknown) {
     const key = this.map.on(type as any, listener);
     this.listenerKeys.push(key);
@@ -194,9 +205,9 @@ export default class MapService {
         noFeatureCallback(event);
       }
     };
-    // if (debounceTime) {
-    //   listener = debounce(listener, debounceTime);
-    // }
+    if (debounceTime) {
+      listener = debounce(listener, debounceTime);
+    }
     return this.on(type, listener);
   }
 
