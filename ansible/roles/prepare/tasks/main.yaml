@@ -161,7 +161,7 @@
     - prepare-static-build
     - deploy-static
   environment:
-  command: "{{ root }}/node_modules/.bin/rollup --config"
+  command: "{{ root }}/node_modules/.bin/rolldown --config"
   args:
     chdir: "{{ root }}"
     creates: "{{ package_info.static_build_dir }}/app.js"
