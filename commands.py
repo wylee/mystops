@@ -3,6 +3,7 @@ import posixpath
 import re
 import shutil
 from pathlib import Path
+from typing import Annotated
 
 import django
 from runcommands import abort, arg, command, confirm, printer
@@ -20,7 +21,12 @@ REMOTE_SITE_DIR = "/sites/mystops"
 
 
 @command
-def clean(deep=False):
+def clean(
+    deep: Annotated[
+        bool,
+        arg(help="Deep clean?", no_inverse=True),
+    ] = False,
+):
     """Clean up locally.
 
     This removes build, dist, and cache directories by default.
@@ -70,8 +76,14 @@ def rm_dir(name, quiet=False):
 
 @command
 def db(
-    postgres_bin: arg(envvar="MYSTOPS_POSTGRES_BIN") = None,
-    postgres_data: arg(envvar="MYSTOPS_POSTGRES_DATA_DIR") = None,
+    postgres_bin: Annotated[
+        str | None,
+        arg(envvar="MYSTOPS_POSTGRES_BIN"),
+    ] = None,
+    postgres_data: Annotated[
+        str | None,
+        arg(envvar="MYSTOPS_POSTGRES_DATA_DIR"),
+    ] = None,
 ):
     """Run postgres locally."""
     if not postgres_data:
@@ -81,7 +93,10 @@ def db(
 
 @command
 def db_setup(
-    postgres_bin: arg(envvar="MYSTOPS_POSTGRES_BIN") = None,
+    postgres_bin: Annotated[
+        str | None,
+        arg(envvar="MYSTOPS_POSTGRES_BIN"),
+    ] = None,
 ):
     """Set up local mystops database."""
     commands = [
@@ -145,12 +160,21 @@ def docker():
 @command
 def load(
     env,
-    out_dir: arg(
-        short_option="-d",
-        help="Directory to save downloaded & processed data into",
-    ) = None,
-    overwrite: arg(help="Overwrite previously downloaded (cached) stop data?") = False,
-    clear: arg(help="Clear existing records from database?") = True,
+    out_dir: Annotated[
+        str | None,
+        arg(
+            short_option="-d",
+            help="Directory to save downloaded & processed data into",
+        ),
+    ] = None,
+    overwrite: Annotated[
+        bool,
+        arg(help="Overwrite previously downloaded (cached) stop data?"),
+    ] = False,
+    clear: Annotated[
+        bool,
+        arg(help="Clear existing records from database?"),
+    ] = True,
 ):
     """Geta stop data from TriMet API and load into database.
 
@@ -167,11 +191,17 @@ def load(
 @command
 def get_stops(
     env,
-    out_dir: arg(
-        short_option="-d",
-        help="Directory to save downloaded & processed stop data into",
-    ) = None,
-    overwrite: arg(help="Overwrite previously downloaded (cached) stop data?") = False,
+    out_dir: Annotated[
+        str | None,
+        arg(
+            short_option="-d",
+            help="Directory to save downloaded & processed stop data into",
+        ),
+    ] = None,
+    overwrite: Annotated[
+        bool,
+        arg(help="Overwrite previously downloaded (cached) stop data?"),
+    ] = False,
 ):
     """Get all stops from TriMet API and save to disk.
 
@@ -192,51 +222,75 @@ def get_stops(
 @command
 def load_stops(
     env,
-    data_dir: arg(help="Directory to read data from") = None,
-    file_name: arg(help="Data file name relative to data directory") = "stops.json",
-    clear: arg(help="Clear existing stops from database?") = True,
+    data_dir: Annotated[
+        str | None,
+        arg(help="Directory to read data from"),
+    ] = None,
+    file_name: Annotated[
+        str,
+        arg(help="Data file name relative to data directory"),
+    ] = "stops.json",
+    clear: Annotated[
+        bool,
+        arg(help="Clear existing stops from database?"),
+    ] = True,
 ):
     """Load stops from disk into database."""
     settings = django_settings(env)
 
     from mystops.loaders.stops import load
 
-    data_dir = data_dir or settings.TRIMET_DATA_DIR
-    path = Path(data_dir) / file_name
+    path = Path(data_dir or settings.TRIMET_DATA_DIR) / file_name
     load(path, clear)
 
 
 @command
 def load_routes(
     env,
-    data_dir: arg(help="Directory to read data from") = None,
-    file_name: arg(help="Data file name relative to data directory") = "routes.json",
-    clear: arg(help="Clear existing routes from database?") = True,
+    data_dir: Annotated[
+        str | None,
+        arg(help="Directory to read data from"),
+    ] = None,
+    file_name: Annotated[
+        str,
+        arg(help="Data file name relative to data directory"),
+    ] = "routes.json",
+    clear: Annotated[
+        bool,
+        arg(help="Clear existing routes from database?"),
+    ] = True,
 ):
     """Load routes from disk into database."""
     settings = django_settings(env)
 
     from mystops.loaders.routes import load
 
-    data_dir = data_dir or settings.TRIMET_DATA_DIR
-    path = Path(data_dir) / file_name
+    path = Path(data_dir or settings.TRIMET_DATA_DIR) / file_name
     load(path, clear)
 
 
 @command
 def load_stop_routes(
     env,
-    data_dir: arg(help="Directory to read data from") = None,
-    file_name: arg(help="Data file name relative to data directory") = "stops.json",
-    clear: arg(help="Clear existing stop routes from database?") = True,
+    data_dir: Annotated[
+        str | None,
+        arg(help="Directory to read data from"),
+    ] = None,
+    file_name: Annotated[
+        str,
+        arg(help="Data file name relative to data directory"),
+    ] = "stops.json",
+    clear: Annotated[
+        bool,
+        arg(help="Clear existing stop routes from database?"),
+    ] = True,
 ):
     """Load stop routes from disk into database."""
     settings = django_settings(env)
 
     from mystops.loaders.stop_routes import load
 
-    data_dir = data_dir or settings.TRIMET_DATA_DIR
-    path = Path(data_dir) / file_name
+    path = Path(data_dir or settings.TRIMET_DATA_DIR) / file_name
     load(path, clear)
 
 
@@ -244,7 +298,12 @@ def load_stop_routes(
 
 
 @command
-def export_stops(destination="all-stops.geojson"):
+def export_stops(
+    destination: Annotated[
+        str,
+        arg(help="Export file name"),
+    ] = "all-stops.geojson",
+):
     """Export all stops as GeoJSON
 
     Run this, remove `crs` from GeoJSON file, then upload file to Mapbox
@@ -390,7 +449,7 @@ def prepare(
     public_hostname,
     version=None,
     provision_=False,
-    clean_: arg(help="Remove build directory? [no]") = True,
+    clean_: Annotated[bool, arg(help="Remove build directory? [no]")] = True,
 ):
     """Prepare build locally for deployment."""
     version = version or c.git_version()
@@ -412,19 +471,46 @@ def prepare(
 
 @command
 def deploy(
-    env: arg(help="Build/deployment environment"),
-    host: arg(help="Deployment host"),
-    public_hostname: arg(help="Public-facing hostname"),
-    version: arg(help="Name of version being deployed [short git hash]") = None,
-    provision_: arg(help="Run provisioning steps? [no]") = False,
-    prepare_: arg(
-        short_option="-r",
-        inverse_short_option="-R",
-        help="Run local prep steps? [yes]",
-    ) = True,
-    clean_: arg(help="Remove build directory? [no]") = True,
-    app: arg(help="Deploy app? [yes]") = True,
-    static: arg(help="Deploy static files? [yes]") = True,
+    env: Annotated[
+        str,
+        arg(help="Build/deployment environment"),
+    ],
+    host: Annotated[
+        str,
+        arg(help="Deployment host"),
+    ],
+    public_hostname: Annotated[
+        str,
+        arg(help="Public-facing hostname"),
+    ],
+    version: Annotated[
+        str | None,
+        arg(help="Name of version being deployed [short git hash]"),
+    ] = None,
+    provision_: Annotated[
+        bool,
+        arg(help="Run provisioning steps? [no]"),
+    ] = False,
+    prepare_: Annotated[
+        bool,
+        arg(
+            short_option="-r",
+            inverse_short_option="-R",
+            help="Run local prep steps? [yes]",
+        ),
+    ] = True,
+    clean_: Annotated[
+        bool,
+        arg(help="Remove build directory? [no]"),
+    ] = True,
+    app: Annotated[
+        bool,
+        arg(help="Deploy app? [yes]"),
+    ] = True,
+    static: Annotated[
+        bool,
+        arg(help="Deploy static files? [yes]"),
+    ] = True,
 ):
     """Deploy site."""
     version = version or c.git_version()
@@ -496,7 +582,9 @@ def clean_remote(run_as=SITE_USER, dry_run=False):
     )
 
     paths = find_result.stdout_lines
-    paths = [p for p in paths if re.fullmatch(r"[0-9a-f]{12}", os.path.basename(p))]
+    paths = [
+        p for p in paths if re.fullmatch(r"[0-9a-f]{12}", str(os.path.basename(p)))
+    ]
 
     if not paths:
         abort(404, f"No versions found in {root}")
