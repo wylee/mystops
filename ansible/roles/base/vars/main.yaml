@@ -1,7 +1,8 @@
 ---
 root: "{{ lookup('env', 'PWD') }}"
-core_root: "{{ root }}/../djangokit/core"
-cli_root: "{{ root }}/../djangokit/cli"
+djangokit_core_root: "{{ root }}/../djangokit/core"
+djangokit_cli_root: "{{ root }}/../djangokit/cli"
+runcommands_root: "{{ root }}/../runcommands"
 
 # Base name of env-specific settings file (used on local & remote)
 settings_file: "settings.{{ env }}.toml"

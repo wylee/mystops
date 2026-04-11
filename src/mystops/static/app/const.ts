@@ -1,6 +1,6 @@
 import { fromLonLat, get as getProjection, Projection } from "ol/proj";
 
-export const DEBUG = true;
+export const DEBUG = process.env.NODE_ENV !== "production";
 export const ARRIVALS_URL = `/arrivals`;
 export const REFRESH_INTERVAL = 30 * 1000; // 30 seconds
 

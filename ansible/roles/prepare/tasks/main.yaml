@@ -103,8 +103,9 @@
     state: absent
   with_items:
     - "{{ root }}"
-    - "{{ core_root }}"
-    - "{{ cli_root }}"
+    - "{{ djangokit_core_root }}"
+    - "{{ djangokit_cli_root }}"
+    - "{{ runcommands_root }}"
 
 - name: <LOCAL> Build source distributions
   tags:
@@ -116,8 +117,9 @@
     chdir: "{{ item }}"
   with_items:
     - "{{ root }}"
-    - "{{ core_root }}"
-    - "{{ cli_root }}"
+    - "{{ djangokit_core_root }}"
+    - "{{ djangokit_cli_root }}"
+    - "{{ runcommands_root }}"
 
 - name: <LOCAL> Copy source distributions to build directory
   tags:
@@ -129,8 +131,9 @@
     dest: "{{ app_build_dir }}/dist/"
   with_fileglob:
     - "{{ root }}/dist/*"
-    - "{{ core_root }}/dist/*"
-    - "{{ cli_root }}/dist/*"
+    - "{{ djangokit_core_root }}/dist/*"
+    - "{{ djangokit_cli_root }}/dist/*"
+    - "{{ runcommands_root }}/dist/*"
 
 - name: <LOCAL> Create build archive
   tags:
@@ -161,7 +164,7 @@
     - prepare-static-build
     - deploy-static
   environment:
-  command: "{{ root }}/node_modules/.bin/rolldown --config"
+  command: "{{ root }}/node_modules/.bin/rolldown --config --environment NODE_ENV:{{ env }}"
   args:
     chdir: "{{ root }}"
     creates: "{{ package_info.static_build_dir }}/app.js"
