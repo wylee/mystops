@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build>=0.10.2,<0.11.0"]
+requires = ["uv_build>=0.11,<0.12"]
 build-backend = "uv_build"
 
 [project]
@@ -9,27 +9,27 @@ description = "MyStops - TriMet arrivals on a map"
 authors = [{ name = "Wyatt Baldwin", email = "code@wyattbaldwin.com" }]
 license = { text = "private" }
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "org-djangokit-core>=0.0.5.dev0",
     "org-djangokit-cli>=0.0.8.dev0",
-    "Django>=6.0.4",
+    "Django>=6.0.6",
     "markdown>=3.10.2",
     "mercantile>=1.2.1",
-    "psycopg>=3.3.3",
-    "pydantic>=2.12.5",
+    "psycopg>=3.3.4",
+    "pydantic>=2.13.4",
     "pymemcache>=4.0.0",
-    "requests>=2.33.1",
+    "requests>=2.34.2",
     "runcommands>=1.0a74.dev0",
-    "tzlocal>=5.3.1",
+    "tzlocal>=5.4.4",
 ]
 
 [dependency-groups]
 dev = [
-    "ansible>=13.5.0",
-    "mypy>=1.20.0",
-    "pytest>=9.0.3",
-    "ruff>=0.15.10",
+    "ansible>=14.1.0",
+    "mypy>=2.1.0",
+    "pytest>=9.1.1",
+    "ruff>=0.15.20",
 ]
 
 [tool.uv.sources]
@@ -50,5 +50,5 @@ env = "development"
 
 [tool.runcommands.envs]
 development = { }
-production.host = "app-1.wyattbaldwin.com"
+production.host = "app-2.wyattbaldwin.com"
 production.public_hostname = "mystops.io"

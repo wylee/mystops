@@ -149,8 +149,8 @@ def load(
         short_option="-d",
         help="Directory to save downloaded & processed data into",
     ) = None,
-    overwrite: "Overwrite previously downloaded (cached) stop data?" = False,
-    clear: "Clear existing records from database?" = True,
+    overwrite: arg(help="Overwrite previously downloaded (cached) stop data?") = False,
+    clear: arg(help="Clear existing records from database?") = True,
 ):
     """Geta stop data from TriMet API and load into database.
 
@@ -171,7 +171,7 @@ def get_stops(
         short_option="-d",
         help="Directory to save downloaded & processed stop data into",
     ) = None,
-    overwrite: "Overwrite previously downloaded (cached) stop data?" = False,
+    overwrite: arg(help="Overwrite previously downloaded (cached) stop data?") = False,
 ):
     """Get all stops from TriMet API and save to disk.
 
@@ -192,9 +192,9 @@ def get_stops(
 @command
 def load_stops(
     env,
-    data_dir: "Directory to read data from" = None,
-    file_name: "Data file name relative to data directory" = "stops.json",
-    clear: "Clear existing stops from database?" = True,
+    data_dir: arg(help="Directory to read data from") = None,
+    file_name: arg(help="Data file name relative to data directory") = "stops.json",
+    clear: arg(help="Clear existing stops from database?") = True,
 ):
     """Load stops from disk into database."""
     settings = django_settings(env)
@@ -209,9 +209,9 @@ def load_stops(
 @command
 def load_routes(
     env,
-    data_dir: "Directory to read data from" = None,
-    file_name: "Data file name relative to data directory" = "routes.json",
-    clear: "Clear existing routes from database?" = True,
+    data_dir: arg(help="Directory to read data from") = None,
+    file_name: arg(help="Data file name relative to data directory") = "routes.json",
+    clear: arg(help="Clear existing routes from database?") = True,
 ):
     """Load routes from disk into database."""
     settings = django_settings(env)
@@ -226,9 +226,9 @@ def load_routes(
 @command
 def load_stop_routes(
     env,
-    data_dir: "Directory to read data from" = None,
-    file_name: "Data file name relative to data directory" = "stops.json",
-    clear: "Clear existing stop routes from database?" = True,
+    data_dir: arg(help="Directory to read data from") = None,
+    file_name: arg(help="Data file name relative to data directory") = "stops.json",
+    clear: arg(help="Clear existing stop routes from database?") = True,
 ):
     """Load stop routes from disk into database."""
     settings = django_settings(env)
